@@ -11,6 +11,13 @@ public class Region {
     @GeneratedValue
     private Long id;
 
+    private Long hCode;
+    private String siDo;
+    private String siGunGu;
+    private String eubMyeonDong;
+    private Integer createdDate;
+
+
     //@Relationship // (type = "설정해줄 관계 이름")
     //private List<Weather> weathers = new ArrayList<> ();
     

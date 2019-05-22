@@ -21,7 +21,6 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-<<<<<<< HEAD
             <artifactId>spring-boot-starter-batch</artifactId>
         </dependency>
 
@@ -31,12 +30,28 @@
         </dependency>
         <dependency>
             <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-ogm-core</artifactId>
+            <version>${neo4j-ogm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
             <artifactId>neo4j-ogm-bolt-driver</artifactId>
+            <version>2.1.1</version> <!-- ${neo4j-ogm.version} -->
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-ogm-http-driver</artifactId>
             <version>${neo4j-ogm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.neo4j.driver</groupId>
             <artifactId>neo4j-java-driver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-ogm-embedded-driver</artifactId>
+            <version>3.1.2</version>
+            <!--<scope>test</scope>-->
         </dependency>
 
         <dependency>
@@ -60,6 +75,22 @@
             <groupId>org.springframework.batch</groupId>
             <artifactId>spring-batch-test</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
