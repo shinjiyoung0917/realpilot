@@ -15,9 +15,16 @@ public class RegionController {
     @Autowired
     private RegionService regionService;
 
-    @PostMapping
-    public void loadCSVFiles() {
+    @PostMapping(value = "/csv/region")
+    public void loadCSVFilesTest() {
+        log.info("loadCSVFilesTest 로그  - 진입");
 
+        regionService.createRegionNodes();
+        /*
+        return ResponseEntity
+                .ok()
+                .body(data);
+        */
     }
 
     @PostMapping(value = "/region/{hCode}/{siDo}/{siGunGu}/{eubMyeonDong}/{createdDate}")
@@ -25,6 +32,6 @@ public class RegionController {
                            @PathVariable("eubMyeonDong") String eubMyeonDong, @PathVariable("createdDate") Integer createdDate) {
         log.info("testInsert 로그  - 진입");
 
-        regionService.create(hCode, siDo, siGunGu, eubMyeonDong, createdDate);
+        regionService.createNodeTest(hCode, siDo, siGunGu, eubMyeonDong, createdDate);
     }
 }
