@@ -27,7 +27,7 @@ public class RegionService {
         this.sessionFactory = sessionFactory;
     }
 
-    @PostConstruct
+    //@PostConstruct
     public void createRegionNodes() {
         log.info("createRegionNode 로그  - 진입");
 
@@ -35,8 +35,8 @@ public class RegionService {
         log.info("createRegionNode 로그  - 지역데이터 노드 수 : " + countOfRegionNodes);
 
         if(countOfRegionNodes == 0) {
-            Collection<Object> data = regionRepo.saveAllExcelData();
-            log.info("createRegionNode 로그  - 데이터 : " + data);
+            //Collection<Object> data = regionRepo.saveAllExcelData();
+            //log.info("createRegionNode 로그  - 데이터 : " + data);
         }
     }
 
