@@ -3,6 +3,7 @@ package com.example.realpilot.model;
 import lombok.Builder;
 import lombok.Data;
 import org.neo4j.ogm.annotation.*;
+import org.neo4j.ogm.response.model.NodeModel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,10 @@ public class Sido {
 
     @Relationship(type = "UPPER_UNIT_OF")
     private Set<Sigungu> sigungus = new HashSet<>();
+
+    //private String[] labels;
+    //@Labels
+    //private List<String> labels = new ArrayList<>();
 
     public void addSigungu(Sigungu sigungu) {
         this.sigungus.add(sigungu);

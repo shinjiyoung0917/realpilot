@@ -2,6 +2,7 @@ HELP.md
 /target/
 !.mvn/wrapper/maven-wrapper.jar
 /excelFile/~$KIKcd_H.20190415.xlsx
+/excelFile/~$Grid_20190107.xlsx
 
 ### STS ###
 .apt_generated
