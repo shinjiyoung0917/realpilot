@@ -2,10 +2,9 @@ package com.example.realpilot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 
 @SpringBootApplication
-@EnableNeo4jRepositories(basePackages = "com.example.realpilot.repository")
+//@Configuration + @EnableAutoConfiguration + @ComponentScan을 디폴트 속성으로 함께 사용하는 것과 같음
 public class RealpilotApplication {
 
     public static void main(String[] args) {

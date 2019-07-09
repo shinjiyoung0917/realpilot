@@ -13,27 +13,28 @@ import java.net.URI;
 
 @Service
 public class LoadWeatherWarningService {
-    private static final Logger log = LoggerFactory.getLogger(LoadExcelFileService.class);
+    private static final Logger log = LoggerFactory.getLogger(LoadWeatherWarningService.class);
 
     @Autowired
     private RestTemplate restTemplate;
 
     @Value("${weatherWarning.api.url}")
     private String weatherWarningApiUrl;
+    @Value("${api.serviceKey}")
+    private String serviceKey;
 
     public void callWeatherWarningApi() {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
-        String serviceKey = "y7hP75dT%2FAxfrX5WKcSg31EZIT%2BUXZPOaBXR%2F2xX9oyO1gKR1v5opJc0oX1VjhMB4s45r38hJgfhNfTtYJNyBg%3D%3D";
         URI uri = URI.create(weatherWarningApiUrl + "?ServiceKey=" + serviceKey + "&fromTmFc=20190528&toTmFc=20190704&_type=json");
 
         OpenModel openModel = restTemplate.getForObject(uri, OpenModel.class);
-        log.info("callWeatherWarningApi - : " + openModel);
+        log.info("[Service] callWeatherWarningApi - : " + openModel);
 
         for(WeatherWarning weatherWarning : openModel.getResponse().getBody().getItems().getItem()) {
-            log.info("callWeatherWarningApi - t1 : " + weatherWarning.getT1());
-            log.info("callWeatherWarningApi - t2 : " + weatherWarning.getT2());
-            log.info("callWeatherWarningApi - t3 : " + weatherWarning.getT3());
+            log.info("[Service] callWeatherWarningApi - t1 : " + weatherWarning.getT1());
+            log.info("[Service] callWeatherWarningApi - t2 : " + weatherWarning.getT2());
+            log.info("[Service] callWeatherWarningApi - t3 : " + weatherWarning.getT3());
         }
     }
 }
