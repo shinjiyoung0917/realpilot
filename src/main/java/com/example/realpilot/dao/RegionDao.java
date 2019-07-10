@@ -1,7 +1,11 @@
 package com.example.realpilot.dao;
 
+import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.model.region.Eubmyeondong;
+import com.example.realpilot.model.region.Region;
 import com.example.realpilot.model.region.Sido;
 import com.example.realpilot.model.region.Sigungu;
+import com.example.realpilot.utilAndConfig.RegionListIndex;
 import com.google.gson.Gson;
 import io.dgraph.Transaction;
 import org.slf4j.Logger;
@@ -18,32 +22,33 @@ public class RegionDao<T> {
 
     @Autowired
     private Gson gson = new Gson();
+    @Autowired
+    private DgraphOperations operations;
 
     public void createRegionNode(Transaction transaction, Map<String, List<T>> regionDataMap) {
-        Sido sido = new Sido();
-        Sigungu sigungu = new Sigungu();
+        Sido prevSavedSido = new Sido();
+        Sigungu prevSavedSigungu = new Sigungu();
+        Region region = new Region();
 
         for(String regionName: regionDataMap.keySet()) {
-            log.info("[Dao] createRegionNode - ");
-
             // 행정동코드, 생성날짜, 격자X,Y, TM X,Y
             List<T> valueList = regionDataMap.get(regionName);
-            String sidoName = valueList.get(0).toString();
-            String sggName = valueList.get(1).toString();
-            String umdName = valueList.get(2).toString();
+            String sggName = valueList.get(RegionListIndex.SIGUNGU_NAME_INDEX.getListIndex()).toString();
+            String umdName = valueList.get(RegionListIndex.EUBMYEONDONG_NAME_INDEX.getListIndex()).toString();
 
-            String sidoSggUmdName = sidoName + sggName  + umdName;
-            sidoSggUmdName = sidoSggUmdName.replaceAll(" ", "");
-            String sidoSggName = sidoName + sggName  + umdName;
-            sidoSggName = sidoSggName.replaceAll(" ", "");
-
-            if(sidoName.equals(regionName)) {
-                sido = sido.setRegion(valueList);
-            } else if(sidoSggName.equals(regionName)) {
-                sigungu = sido.setRegion(sido, valueList);
-            } else if(sidoSggUmdName.equals(regionName)) {
-                sido.setRegion(sigungu, valueList);
+            if(sggName.equals("")) {
+                Sido sido = new Sido();
+                prevSavedSido = sido.setRegion(valueList);
+                region.getSidos().add(prevSavedSido);
+            } else if(umdName.equals("")) {
+                Sigungu sigungu = new Sigungu();
+                prevSavedSigungu = sigungu.setRegion(prevSavedSido, valueList);
+            } else {
+                Eubmyeondong eubmyeondong = new Eubmyeondong();
+                eubmyeondong.setRegion(prevSavedSigungu, valueList);
             }
         }
+
+        operations.mutate(transaction, region);
     }
 }

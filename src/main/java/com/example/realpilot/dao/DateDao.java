@@ -1,8 +1,8 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.model.date.Year;
+import com.example.realpilot.dgraph.DgraphOperations;
 import com.google.gson.Gson;
-import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphProto;
 import io.dgraph.Transaction;
@@ -19,7 +19,10 @@ public class DateDao {
 
     @Autowired
     private Gson gson = new Gson();
+    @Autowired
+    private DgraphOperations operations;
 
+    // TODO: 해당 메서드 다른 클래스로 이동
     public void createSchema(DgraphClient dgraphClient) {
         // ** DB ALTER ** //
         dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
@@ -27,7 +30,16 @@ public class DateDao {
         String schema = "year: int @index(int) .\n"
                 + "month: int @index(int) .\n"
                 + "day: int @index(int) .\n"
-                + "hour: int @index(int) .\n";
+                + "hour: int @index(int) .\n"
+                + "sidoName: string @index(fulltext) .\n"
+                + "sggName: string @index(fulltext) .\n"
+                + "umdName: string @index(fulltext) .\n"
+                + "hCode: int @index(int) .\n"
+                + "createdDate: int @index(int) .\n"
+                + "gridX: int @index(int) .\n"
+                + "gridY: int @index(int) .\n"
+                + "tmX: int @index(int) .\n"
+                + "tmY: int @index(int) .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -57,7 +69,9 @@ public class DateDao {
     public void createDateNode(Transaction transaction) {
         Year year = new Year();
 
-        String json = gson.toJson(year.setDate());
+        operations.mutate(transaction, year.setDate());
+
+       /* String json = gson.toJson(year.setDate());
         DgraphProto.Mutation mu = DgraphProto.Mutation
                 .newBuilder()
                 .setSetJson(ByteString.copyFromUtf8(json))
@@ -71,6 +85,6 @@ public class DateDao {
             e.printStackTrace();
         } finally {
             transaction.discard();
-        }
+        }*/
     }
 }

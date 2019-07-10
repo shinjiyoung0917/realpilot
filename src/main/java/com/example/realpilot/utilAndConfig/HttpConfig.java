@@ -12,8 +12,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class RestTemplateConfig {
-    private static final Logger log = LoggerFactory.getLogger(RestTemplateConfig.class);
+public class HttpConfig {
+    private static final Logger log = LoggerFactory.getLogger(HttpConfig.class);
 
     private CloseableHttpClient httpClient;
     private HttpComponentsClientHttpRequestFactory httpRequestFactory;

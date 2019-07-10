@@ -54,7 +54,7 @@ public class LoadExcelFileService<T> {
         readAnyExcelFile(fis, ExcelFileName.ADDRESS_CODE);
 
         doForGridFile();
-        loadTmCoordinateService.callTmCoordinateApi();
+        //loadTmCoordinateService.callTmCoordinateApi();
         //loadWeatherWarningService.callWeatherWarningApi();
 
         for(String regionName: regionDataMap.keySet()) {
@@ -116,6 +116,7 @@ public class LoadExcelFileService<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String addAddressCodeDataToMap(XSSFCell cell, String keyString, List<T> valueList, int columnIndex) {
         switch (cell.getCellType()) {
             case FORMULA:
@@ -133,11 +134,10 @@ public class LoadExcelFileService<T> {
                     valueList.add((T)cell.getStringCellValue());
                 }
                 break;
-            /*case BLANK:
-                valueList.add(cell.getBooleanCellValue());
+            case BLANK:
+                valueList.add((T)""); //cell.getBooleanCellValue()
                 break;
-            */
-        }
+            }
         return keyString;
     }
 
@@ -167,6 +167,7 @@ public class LoadExcelFileService<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String addGridDataToMap(XSSFCell cell, String keyString, List<T> valueList, int columnIndex) {
         switch (cell.getCellType()) {
             case FORMULA:
@@ -179,10 +180,12 @@ public class LoadExcelFileService<T> {
                 if(columnIndex == SIDO_CELL_INDEX - 1 || columnIndex == SIGUNGU_CELL_INDEX - 1 || columnIndex == EUBMYEONDONG_CELL_INDEX - 1) {
                     String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
                     keyString += stringCellValue;
-                    valueList.add((T)cell.getStringCellValue());
                 } else {
                     valueList.add((T)cell.getStringCellValue());
                 }
+                break;
+            case BLANK:
+                valueList.add((T)"");
                 break;
         }
         return keyString;

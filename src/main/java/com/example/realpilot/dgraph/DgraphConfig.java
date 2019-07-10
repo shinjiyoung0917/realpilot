@@ -1,4 +1,4 @@
-package com.example.realpilot.utilAndConfig;
+package com.example.realpilot.dgraph;
 
 import com.example.realpilot.dao.DateDao;
 import io.dgraph.DgraphClient;
