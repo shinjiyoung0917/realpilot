@@ -51,7 +51,11 @@ public class DateDao {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(calendar.YEAR);
 
-        String query = "query monthsCount($year: int) {\n monthsCount(func: eq(year, $year)) {\n countOfMonths: count(months)\n }\n }";
+        String query = "query monthsCount($year: int) {\n" +
+                " monthsCount(func: eq(year, $year)) {\n" +
+                " countOfMonths: count(months)\n" +
+                " }\n" +
+                " }";
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
 

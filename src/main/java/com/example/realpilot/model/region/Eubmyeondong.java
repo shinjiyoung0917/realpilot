@@ -1,34 +1,37 @@
 package com.example.realpilot.model.region;
 
-import com.example.realpilot.utilAndConfig.RegionListIndex;
+import com.example.realpilot.excelModel.RegionData;
 import lombok.Data;
 
-import java.util.List;
+import java.util.Optional;
 
 @Data
-public class Eubmyeondong<T> {
+public class Eubmyeondong {
     private String uid;
-    private T hCode;
-    private T umdName;
-    private T createdDate;
-    private T gridX;
-    private T gridY;
-    private T tmX;
-    private T tmY;
+    private String hCode;
+    private String umdName;
+    private String createdDate;
+    private Integer gridX;
+    private Integer gridY;
+    private double tmX;
+    private double tmY;
 
-    public Eubmyeondong setRegion(Sigungu<T> sggObject, List<T> valueList) {
-        this.hCode = valueList.get(RegionListIndex.ADDRESS_CODE_INDEX.getListIndex());
-        this.umdName = valueList.get(RegionListIndex.EUBMYEONDONG_NAME_INDEX.getListIndex());
-        this.createdDate = valueList.get(RegionListIndex.CREATED_DATE_INDEX.getListIndex());
+    public Eubmyeondong setRegion(Sigungu sggObject, RegionData regionData) {
+        this.hCode = regionData.getHCode();
+        this.umdName = regionData.getSidoName();
+        this.createdDate = regionData.getCreatedDate();
 
-        if(valueList.size() == RegionListIndex.LIST_SIZE_INCLUDE_GRID.getListIndex()) {
-            this.gridX = valueList.get(RegionListIndex.GRID_X_INDEX.getListIndex());
-            this.gridY = valueList.get(RegionListIndex.GRID_Y_INDEX.getListIndex());
+        // grid가 없는 경우도 있음
+        Optional optinalValue = Optional.ofNullable(regionData.getGridX());
+        if(optinalValue.isPresent()) {
+            this.gridX = regionData.getGridX();
+            this.gridY = regionData.getGridY();
         }
 
-        if(valueList.size() == RegionListIndex.LIST_SIZE_INCLUDE_TMCOORD.getListIndex()) {
-            this.tmX = valueList.get(RegionListIndex.TM_X_INDEX.getListIndex());
-            this.tmY = valueList.get(RegionListIndex.TM_Y_INDEX.getListIndex());
+        //optinalValue = Optional.ofNullable(regionData.getTmX());
+        if(regionData.getTmX() != 0 && regionData.getTmY() != 0) {
+            this.tmX = regionData.getTmX();
+            this.tmY = regionData.getTmY();
         }
 
         sggObject.getEubmyeondongs().add(this);

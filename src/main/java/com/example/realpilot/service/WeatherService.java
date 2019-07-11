@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class WeatherService<T> {
+public class WeatherService {
     private static final Logger log = LoggerFactory.getLogger(WeatherService.class);
 
     @Autowired
@@ -37,8 +37,8 @@ public class WeatherService<T> {
     @Value("${api.serviceKey}")
     private String serviceKey;
 
-    private Integer GRID_X_IDNEX;
-    private Integer GRID_Y_INDEX;
+    private Integer GRID_X_IDNEX = 0;
+    private Integer GRID_Y_INDEX = 1;
 
     // 동네예보 API(초단기실황/초단기예보/동네예보)
     public void callWeatherApiByGrid() {

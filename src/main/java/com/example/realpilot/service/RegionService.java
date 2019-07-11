@@ -1,12 +1,10 @@
 package com.example.realpilot.service;
 
 import com.example.realpilot.dao.RegionDao;
+import com.example.realpilot.excelModel.RegionData;
 import com.example.realpilot.externalApiModel.tmCoordinate.OpenModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
-import com.example.realpilot.utilAndConfig.ExcelFileName;
-import com.example.realpilot.utilAndConfig.RegionListIndex;
-import com.example.realpilot.utilAndConfig.SidoList;
-import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
+import com.example.realpilot.utilAndConfig.*;
 import io.dgraph.DgraphClient;
 import io.dgraph.Transaction;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -20,14 +18,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 
 @Service
-public class RegionService<T> {
+public class RegionService {
     private static final Logger log = LoggerFactory.getLogger(RegionService.class);
 
     @Autowired
@@ -48,11 +45,7 @@ public class RegionService<T> {
     @Value("${grid.file.path}")
     private String gridFilePath;
 
-    private Integer SIDO_CELL_INDEX = 1;
-    private Integer SIGUNGU_CELL_INDEX = 2;
-    private Integer EUBMYEONDONG_CELL_INDEX = 3;
-
-    private Map<String, List<T>> regionDataMap = new LinkedHashMap<>();
+    public Map<String, RegionData> regionDataMap = new LinkedHashMap<>();
     public Set<List<Integer>> gridSet = new LinkedHashSet<>();
 
     public void doForAddressCodeFile() throws IOException {
@@ -69,10 +62,6 @@ public class RegionService<T> {
         readAnyExcelFile(fis, ExcelFileName.GRID);
 
         addGridDataToSet();
-
-        for(String regionName: regionDataMap.keySet()) {
-            log.info("[Service] doForGridFile - " + regionName + " / " + regionDataMap.get(regionName));
-        }
     }
 
     private void readAnyExcelFile(FileInputStream fis, ExcelFileName fileName) throws IOException {
@@ -100,47 +89,22 @@ public class RegionService<T> {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
-                List<T> valueList = new ArrayList();
+                RegionData regionData = new RegionData();
 
                 for(int columnIndex = 0; columnIndex <= numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
                     if(cell == null) {
                         continue;
                     } else {
-                        keyString = addAddressCodeDataToMap(cell, keyString, valueList, columnIndex);
+                        keyString = regionData.setRegionDataByAddressCode(cell, columnIndex, keyString);
                     }
                 }
 
                 if (checkForValidData(keyString)) {
-                    regionDataMap.put(keyString, valueList);
+                    regionDataMap.put(keyString, regionData);
                 }
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private String addAddressCodeDataToMap(XSSFCell cell, String keyString, List<T> valueList, int columnIndex) {
-        switch (cell.getCellType()) {
-            case FORMULA:
-                valueList.add((T)cell.getCellFormula());
-                break;
-            case NUMERIC:
-                valueList.add((T)(Object)cell.getNumericCellValue());
-                break;
-            case STRING:
-                if(columnIndex == SIDO_CELL_INDEX || columnIndex == SIGUNGU_CELL_INDEX || columnIndex == EUBMYEONDONG_CELL_INDEX) {
-                    String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
-                    keyString += stringCellValue;
-                    valueList.add((T)cell.getStringCellValue());
-                } else {
-                    valueList.add((T)cell.getStringCellValue());
-                }
-                break;
-            case BLANK:
-                valueList.add((T)""); //cell.getBooleanCellValue()
-                break;
-            }
-        return keyString;
     }
 
     private void parseGridFile(XSSFSheet sheet, int numberOfRows) {
@@ -153,53 +117,29 @@ public class RegionService<T> {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
-                List<T> extraValueList = new ArrayList();
+                RegionData tempRegionData = new RegionData();
+
 
                 for(int columnIndex = 0; columnIndex <= numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
                     if(cell == null) {
                         continue;
                     } else {
-                        keyString = addGridDataToMap(cell, keyString, extraValueList, columnIndex);
+                        Optional<RegionData> originalRegionData = Optional.ofNullable(regionDataMap.get(keyString));
+                        keyString = tempRegionData.setRegionDataByGrid(cell, columnIndex, keyString, originalRegionData);
                     }
                 }
-
-                regionDataMap.get(keyString).addAll(extraValueList);
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private String addGridDataToMap(XSSFCell cell, String keyString, List<T> valueList, int columnIndex) {
-        switch (cell.getCellType()) {
-            case FORMULA:
-                valueList.add((T)cell.getCellFormula());
-                break;
-            case NUMERIC:
-                valueList.add((T)(Object)cell.getNumericCellValue());
-                break;
-            case STRING:
-                if(columnIndex == SIDO_CELL_INDEX - 1 || columnIndex == SIGUNGU_CELL_INDEX - 1 || columnIndex == EUBMYEONDONG_CELL_INDEX - 1) {
-                    String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
-                    keyString += stringCellValue;
-                } else {
-                    valueList.add((T)cell.getStringCellValue());
-                }
-                break;
-            case BLANK:
-                valueList.add((T)"");
-                break;
-        }
-        return keyString;
-    }
-
     private void addGridDataToSet() {
-        for(Map.Entry<String, List<T>> entry : regionDataMap.entrySet()) {
-            if(entry.getValue().size() == RegionListIndex.LIST_SIZE_INCLUDE_GRID.getListIndex()) {
-                // List<T>로 하는게 맞는거겠지,,
+        for(Map.Entry<String, RegionData> entry : regionDataMap.entrySet()) {
+            Optional optinalValue = Optional.ofNullable(entry.getValue().getGridX());
+            if(optinalValue.isPresent()) {
                 List<Integer> grid = new ArrayList<>();
-                grid.add((entry.getValue().get(RegionListIndex.GRID_X_INDEX.getListIndex()));
-                grid.add(entry.getValue().get(RegionListIndex.GRID_X_INDEX.getListIndex()));
+                grid.add(entry.getValue().getGridX());
+                grid.add(entry.getValue().getGridY());
                 gridSet.add(grid);
             }
         }
@@ -246,20 +186,23 @@ public class RegionService<T> {
 
             parseTmCoordinate(openModel.getList());
         }
-
     }
 
     private void parseTmCoordinate(List<TmCoordinate> tmCoordinateList) {
-        // List를 돌면서 각 지역별로 TM좌표 저장
         for(TmCoordinate tm : tmCoordinateList) {
             String fullRegionName = tm.getSidoName() + tm.getSggName() + tm.getUmdName();
             fullRegionName = fullRegionName.replaceAll(" ", "");
 
-            Optional<List<T>> optionalValueList = Optional.ofNullable(regionDataMap.get(fullRegionName));
-            if(optionalValueList.isPresent()) {
-                optionalValueList.get().add((T)(Object)tm.getTmX());
-                optionalValueList.get().add((T)(Object)tm.getTmY());
+            Optional<RegionData> optionalRegionData = Optional.ofNullable(regionDataMap.get(fullRegionName));
+            if(optionalRegionData.isPresent()) {
+                optionalRegionData.get().setRegionDataByTmCoord(tm);
             }
+        }
+    }
+
+    public void printRegionData() {
+        for(String regionName : regionDataMap.keySet()) {
+            log.info("[Service] printRegionData - " + regionName + " / " + regionDataMap.get(regionName));
         }
     }
 }

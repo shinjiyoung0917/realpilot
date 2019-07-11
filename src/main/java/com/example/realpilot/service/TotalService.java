@@ -3,10 +3,12 @@ package com.example.realpilot.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 
+@Service
 public class TotalService {
     private static final Logger log = LoggerFactory.getLogger(TotalService.class);
 
@@ -25,9 +27,10 @@ public class TotalService {
         regionService.callTmCoordinateApi();
         //weatherService.callWeatherWarningApi();
 
-        // DB에 INSERT
+        regionService.printRegionData();
+
         regionService.addRegionNode();
-        dateService.addDateNode();
+        //dateService.addDateNode();
 
         weatherService.callWeatherApiByGrid();
     }

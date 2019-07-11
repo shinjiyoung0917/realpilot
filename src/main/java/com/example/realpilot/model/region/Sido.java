@@ -1,31 +1,32 @@
 package com.example.realpilot.model.region;
 
-import com.example.realpilot.utilAndConfig.RegionListIndex;
+import com.example.realpilot.excelModel.RegionData;
 import lombok.Data;
 
-import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
-public class Sido<T> {
+public class Sido {
     private String uid;
-    private T hCode;
-    private T sidoName;
-    private T createdDate;
-    private T gridX;
-    private T gridY;
+    private String hCode;
+    private String sidoName;
+    private String createdDate;
+    private Integer gridX;
+    private Integer gridY;
     private List<Sigungu> sigungus = new ArrayList<>();
 
-    public Sido setRegion(List<T> valueList) {
-        this.hCode = valueList.get(RegionListIndex.ADDRESS_CODE_INDEX.getListIndex());
-        this.sidoName = valueList.get(RegionListIndex.SIDO_NAME_INDEX.getListIndex());
-        this.createdDate = valueList.get(RegionListIndex.CREATED_DATE_INDEX.getListIndex());
+    public Sido setRegion(RegionData regionData) {
+        this.hCode = regionData.getHCode();
+        this.sidoName = regionData.getSidoName();
+        this.createdDate = regionData.getCreatedDate();
 
         // grid가 없는 경우도 있음
-        if(valueList.size() == RegionListIndex.LIST_SIZE_INCLUDE_GRID.getListIndex()) {
-            this.gridX = valueList.get(RegionListIndex.GRID_X_INDEX.getListIndex());
-            this.gridY = valueList.get(RegionListIndex.GRID_Y_INDEX.getListIndex());
+        Optional optinalValue = Optional.ofNullable(regionData.getGridX());
+        if(optinalValue.isPresent()) {
+            this.gridX = regionData.getGridX();
+            this.gridY = regionData.getGridY();
         }
 
         return this;
