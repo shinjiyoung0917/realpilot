@@ -8,4 +8,8 @@ import java.util.List;
 @Data
 public class Region {
     private List<Sido> sidos = new ArrayList<>();
+
+    public void setRegion() {
+
+    }
 }

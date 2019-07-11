@@ -6,8 +6,6 @@ import io.dgraph.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-
 @Service
 public class DateService {
     @Autowired
@@ -15,20 +13,16 @@ public class DateService {
     @Autowired
     private DateDao dateDao;
 
-    @PostConstruct
-    public void getDateNodeCountService() {
+    // TODO: DgraphClient, Transaction 모두 dao쪽에서 선언하는 것으로 수정
+    public void addDateNode() {
         int dateNodeCount = dateDao.getDateNodeCountDao(dgraphClient);
 
         if(dateNodeCount == 0) {
-            addDateNode();
+            Transaction transaction = dgraphClient.newTransaction();
+            //Transaction transaction = getGraphClient().newTransaction();
+
+            dateDao.createDateNode(transaction);
         }
-    }
-
-    public void addDateNode() {
-        Transaction transaction = dgraphClient.newTransaction();
-        //Transaction transaction = getGraphClient().newTransaction();
-
-        dateDao.createDateNode(transaction);
     }
 
     /*public static DgraphClient getGraphClient() {

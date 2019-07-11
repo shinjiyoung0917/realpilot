@@ -70,21 +70,5 @@ public class DateDao {
         Year year = new Year();
 
         operations.mutate(transaction, year.setDate());
-
-       /* String json = gson.toJson(year.setDate());
-        DgraphProto.Mutation mu = DgraphProto.Mutation
-                .newBuilder()
-                .setSetJson(ByteString.copyFromUtf8(json))
-                .build();
-
-        try {
-            transaction.mutate(mu);
-            transaction.commit();
-            log.info("[Dao] createDateNode - 커밋 완료");
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            transaction.discard();
-        }*/
     }
 }

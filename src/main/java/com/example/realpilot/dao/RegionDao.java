@@ -1,18 +1,22 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.model.date.Year;
 import com.example.realpilot.model.region.Eubmyeondong;
 import com.example.realpilot.model.region.Region;
 import com.example.realpilot.model.region.Sido;
 import com.example.realpilot.model.region.Sigungu;
 import com.example.realpilot.utilAndConfig.RegionListIndex;
 import com.google.gson.Gson;
+import io.dgraph.DgraphClient;
+import io.dgraph.DgraphProto;
 import io.dgraph.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +24,8 @@ import java.util.Map;
 public class RegionDao<T> {
     private static final Logger log = LoggerFactory.getLogger(RegionDao.class);
 
+    @Autowired
+    private DgraphClient dgraphClient;
     @Autowired
     private Gson gson = new Gson();
     @Autowired
@@ -50,5 +56,18 @@ public class RegionDao<T> {
         }
 
         operations.mutate(transaction, region);
+    }
+
+    public Region getRegionNodeByGrid(Integer gridX, Integer gridY) {
+        String query = "query regionByGrid(gridX: int) {\n regionByGrid(func: eq(gridX, $gridX)) {\n expand(_all_)\n }\n }";
+        Map<String, String> var = Collections.singletonMap("gridX", String.valueOf(gridX));
+        var.put("gridY", String.valueOf(gridY));
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+
+        Region region = gson.fromJson(res.getJson().toStringUtf8(), Region.class);
+
+        //List<Region.RegionByGrid> regionByGrid = region.getRegionByGrid();
+
+        return region;
     }
 }
