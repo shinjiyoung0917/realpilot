@@ -16,7 +16,6 @@ public class Year implements Serializable {
     private String uid;
     private Integer year;
     private List<Month> months; // = new ArrayList<>();
-    private List<MonthsCount> monthsCount;
 
 
     private static final Logger log = LoggerFactory.getLogger(Year.class);
@@ -53,7 +52,7 @@ public class Year implements Serializable {
             int daysOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
             log.info("[Model] Year - " + month.getMonth() + "월의 일 수 : " + daysOfMonth);
 
-            for (int d = 1; d < daysOfMonth; ++d) {
+            for (int d = 1; d <= daysOfMonth; ++d) {
                 day = new Day();
                 day.setDay(d);
                 day.setHours(hourList);
@@ -65,12 +64,4 @@ public class Year implements Serializable {
 
         return this;
     }
-
-    // 아래의 클래스 이름으로 설정된 변수 이름이 root query
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public class MonthsCount implements Serializable {
-        private Integer countOfMonths;
-    }
-
 }

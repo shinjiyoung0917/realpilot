@@ -26,16 +26,17 @@ public class HttpConfig {
     @Bean
     public ClientHttpRequestFactory simpleClientHttpRequestFactory() {
         httpClient = HttpClientBuilder.create()
-                .setMaxConnTotal(30000)         // 최대 오픈되는 커넥션 수 제한
-                .setMaxConnPerRoute(3000)       // IP,포트 1쌍에 대해 수행 할 연결 수 제한
-                .setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy())
+                .setMaxConnTotal(100)         // 최대 오픈되는 커넥션 수 제한
+                .setMaxConnPerRoute(30)       // IP,포트 1쌍에 대해 수행 할 연결 수 제한
                 .build();
 
         httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-        httpRequestFactory.setConnectTimeout(30000);
-        httpRequestFactory.setReadTimeout(50000);
+        httpRequestFactory.setConnectTimeout(1000);
+        httpRequestFactory.setReadTimeout(3000);
         httpRequestFactory.setHttpClient(httpClient);
 
         return httpRequestFactory;
     }
+
+    // TODO: 호출 실패하면 retry 사용해서 재시도하는 방법으로 수정
 }

@@ -1,5 +1,6 @@
 package com.example.realpilot.dao;
 
+import com.example.realpilot.model.date.DateQueryResult;
 import com.example.realpilot.model.date.Year;
 import com.example.realpilot.dgraph.DgraphOperations;
 import com.google.gson.Gson;
@@ -38,8 +39,8 @@ public class DateDao {
                 + "createdDate: int @index(int) .\n"
                 + "gridX: int @index(int) .\n"
                 + "gridY: int @index(int) .\n"
-                + "tmX: int @index(int) .\n"
-                + "tmY: int @index(int) .\n";
+                + "tmX: float @index(float) .\n"
+                + "tmY: float @index(float) .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -53,15 +54,15 @@ public class DateDao {
 
         String query = "query monthsCount($year: int) {\n" +
                 " monthsCount(func: eq(year, $year)) {\n" +
-                " countOfMonths: count(months)\n" +
-                " }\n" +
-                " }";
+                "    countOfMonths: count(months)\n" +
+                "  }\n" +
+                "}";
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
 
-        Year year = gson.fromJson(res.getJson().toStringUtf8(), Year.class);
+        DateQueryResult dateQueryResult = gson.fromJson(res.getJson().toStringUtf8(), DateQueryResult.class);
 
-        List<Year.MonthsCount> monthsCount = year.getMonthsCount();
+        List<DateQueryResult.DataByFunc> monthsCount = dateQueryResult.getMonthsCount();
         if(monthsCount.size() != 0) {
             return monthsCount.get(0).getCountOfMonths();
         } else {

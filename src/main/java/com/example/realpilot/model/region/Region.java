@@ -9,7 +9,17 @@ import java.util.List;
 public class Region {
     private List<Sido> sidos = new ArrayList<>();
 
-    public void setRegion() {
+    private String uid;
+    private String hCode;
+    private String sidoName;
+    private String sggName;
+    private String umdName;
+    private String createdDate;
+    private Integer gridX;
+    private Integer gridY;
+    private double tmX;
+    private double tmY;
 
+    public void setRegion() {
     }
 }

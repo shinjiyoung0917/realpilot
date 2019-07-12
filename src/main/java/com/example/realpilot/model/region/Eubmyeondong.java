@@ -1,8 +1,10 @@
 package com.example.realpilot.model.region;
 
 import com.example.realpilot.excelModel.RegionData;
+import com.example.realpilot.model.weather.HourlyWeather;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Optional;
 
 @Data
@@ -15,10 +17,11 @@ public class Eubmyeondong {
     private Integer gridY;
     private double tmX;
     private double tmY;
+    private List<HourlyWeather> hourlyWeather;
 
     public Eubmyeondong setRegion(Sigungu sggObject, RegionData regionData) {
         this.hCode = regionData.getHCode();
-        this.umdName = regionData.getSidoName();
+        this.umdName = regionData.getUmdName();
         this.createdDate = regionData.getCreatedDate();
 
         // grid가 없는 경우도 있음

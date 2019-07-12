@@ -23,16 +23,15 @@ public class TotalService {
     private void totalFlow() throws IOException {
         regionService.doForAddressCodeFile();
         regionService.doForGridFile();
-
-        regionService.callTmCoordinateApi();
-        //weatherService.callWeatherWarningApi();
+        //regionService.callTmCoordinateApi();
 
         regionService.printRegionData();
 
         regionService.addRegionNode();
-        //dateService.addDateNode();
+        dateService.addDateNode();
 
-        weatherService.callWeatherApiByGrid();
+        //////weatherService.callWeatherApiByGrid();
+        //weatherService.callWeatherWarningApi();
     }
 
 }
