@@ -1,7 +1,6 @@
 package com.example.realpilot.dao;
 
-import com.example.realpilot.model.date.DateQueryResult;
-import com.example.realpilot.model.date.Year;
+import com.example.realpilot.model.date.*;
 import com.example.realpilot.dgraph.DgraphOperations;
 import com.google.gson.Gson;
 import io.dgraph.DgraphClient;
@@ -15,32 +14,40 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 @Repository
-public class DateDao {
+public class DateDao<T> {
     private static final Logger log = LoggerFactory.getLogger(DateDao.class);
 
     @Autowired
-    private Gson gson = new Gson();
+    private DgraphClient dgraphClient;
     @Autowired
     private DgraphOperations operations;
+    @Autowired
+    private Gson gson = new Gson();
 
-    // TODO: 해당 메서드 다른 클래스로 이동
+    private static final int TOTAL_TIME_OF_DAY = 24;
+    private static final int TOTAL_MONTHS_OF_YEAR = 12;
+
+    // TODO: 해당 메서드 다른 클래스로 이동 (dgraph config 관련쪽으로?)
     public void createSchema(DgraphClient dgraphClient) {
         // ** DB ALTER ** //
         dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
 
-        String schema = "year: int @index(int) .\n"
-                + "month: int @index(int) .\n"
-                + "day: int @index(int) .\n"
-                + "hour: int @index(int) .\n"
-                + "sidoName: string @index(fulltext) .\n"
-                + "sggName: string @index(fulltext) .\n"
-                + "umdName: string @index(fulltext) .\n"
-                + "hCode: int @index(int) .\n"
-                + "createdDate: int @index(int) .\n"
-                + "gridX: int @index(int) .\n"
-                + "gridY: int @index(int) .\n"
-                + "tmX: float @index(float) .\n"
-                + "tmY: float @index(float) .\n";
+        String schema = "year: int @index(int) .\n" +
+                "month: int @index(int) .\n" +
+                "day: int @index(int) .\n" +
+                "hour: int @index(int) .\n" +
+                "sidoName: string @index(fulltext) .\n" +
+                "sggName: string @index(fulltext) .\n" +
+                "umdName: string @index(fulltext) .\n" +
+                "hCode: int @index(int) .\n" +
+                "createdDate: int @index(int) .\n" +
+                "gridX: int @index(int) .\n" +
+                "gridY: int @index(int) .\n" +
+                "tmX: float @index(float) .\n" +
+                "tmY: float @index(float) .\n" +
+                "baseDate: string @index(fulltext) .\n" +
+                "baseTime: string @index(fulltext) .\n";
+                //+ "hourlyWeather: uid @reverse .";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -48,7 +55,7 @@ public class DateDao {
         log.info("[Dao] createSchema - DGraph 스키마 세팅 완료");
     }
 
-    public int getDateNodeCountDao(DgraphClient dgraphClient) {
+    public int getDateNodeCount(DgraphClient dgraphClient) {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(calendar.YEAR);
 
@@ -57,12 +64,13 @@ public class DateDao {
                 "    countOfMonths: count(months)\n" +
                 "  }\n" +
                 "}";
+
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
 
-        DateQueryResult dateQueryResult = gson.fromJson(res.getJson().toStringUtf8(), DateQueryResult.class);
+        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
 
-        List<DateQueryResult.DataByFunc> monthsCount = dateQueryResult.getMonthsCount();
+        List<DateRootQuery.DataByFunc> monthsCount = dateRootQuery.getMonthsCount();
         if(monthsCount.size() != 0) {
             return monthsCount.get(0).getCountOfMonths();
         } else {
@@ -72,8 +80,82 @@ public class DateDao {
     }
 
     public void createDateNode(Transaction transaction) {
-        Year year = new Year();
+        Calendar calendar = Calendar.getInstance();
+        int currentYear = calendar.get(calendar.YEAR);
 
-        operations.mutate(transaction, year.setDate());
+        List<Hour> hourList = new ArrayList<>();
+        for(int h = 0 ; h < TOTAL_TIME_OF_DAY ; ++h) {
+            Hour hour = new Hour();
+            hour.setDate(h);
+            hourList.add(hour);
+        }
+
+        List<Month> monthList = new ArrayList<>();
+        for(int m = 1 ; m <= TOTAL_MONTHS_OF_YEAR ; ++m) {
+            calendar.set(currentYear, m - 1, 1);
+            int daysOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+            log.info("[Dao] createDateNode - " + m + "월의 일 수 : " + daysOfMonth);
+
+            List<Day> dayList = new ArrayList<>();
+            for (int d = 1; d <= daysOfMonth; ++d) {
+                Day day = new Day();
+                day.setDate(d, hourList);
+                dayList.add(day);
+            }
+
+            Month month = new Month();
+            month.setDate(m, dayList);
+            monthList.add(month);
+        }
+
+        Year year = new Year();
+        year.setDate(currentYear, monthList);
+
+        Dates date = new Dates();
+        date.getYears().add(year);
+
+        operations.mutate(transaction, date);
+    }
+
+    public Hour getCurrentTimeNode() {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
+                " currentDate(func: eq(year, $year)) {\n" +
+                "    year\n" +
+                "    months @filter(eq(month, $month)) {\n" +
+                "      month\n" +
+                "      days @filter(eq(day, $day)) {\n" +
+                "        day\n" +
+                "        hours @filter(eq(hour, $hour)) {\n" +
+                "          uid\n" +
+                "          hour\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var  = new LinkedHashMap<>();
+        var.put("$year", String.valueOf(year));
+        var.put("$month", String.valueOf(month));
+        var.put("$day", String.valueOf(day));
+        var.put("$hour", String.valueOf(hour));
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        List<Dates> currentDate =  dateRootQuery.getCurrentDate();
+
+        // TODO: 연쇄적인 호출을 줄일 방법은 없을까
+        return currentDate.get(0).getMonths().get(0).getDays().get(0).getHours().get(0);
+    }
+
+    public void updateDateNode(T object) {
+        Transaction transaction = dgraphClient.newTransaction();
+        operations.mutate(transaction, object);
     }
 }

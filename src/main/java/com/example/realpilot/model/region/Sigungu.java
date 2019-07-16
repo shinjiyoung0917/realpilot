@@ -11,13 +11,15 @@ import java.util.Optional;
 @Data
 public class Sigungu {
     private String uid;
+
     private String hCode;
     private String sggName;
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
+
     private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
-    private List<HourlyWeather> hourlyWeather;
+    private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
 
     public Sigungu setRegion(Sido sidoObject, RegionData regionData) {
         this.hCode = regionData.getHCode();

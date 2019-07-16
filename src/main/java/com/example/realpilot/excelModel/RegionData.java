@@ -17,8 +17,8 @@ public class RegionData {
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
-    private double tmX;
-    private double tmY;
+    private Double tmX;
+    private Double tmY;
 
     public String setRegionDataByAddressCode(XSSFCell cell, int columnIndex, String keyString) {
         if(columnIndex == AddressCodeFileIndex.ADDRESS_CODE_INDEX.getIndex()) {

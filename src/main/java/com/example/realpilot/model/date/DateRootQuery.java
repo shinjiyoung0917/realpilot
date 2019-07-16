@@ -6,9 +6,9 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class DateQueryResult {
-    // root query
+public class DateRootQuery {
     private List<DataByFunc> monthsCount;
+    private List<Dates> currentDate;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -30,7 +30,7 @@ public class TotalService {
         regionService.addRegionNode();
         dateService.addDateNode();
 
-        //////weatherService.callWeatherApiByGrid();
+        weatherService.callWeatherApiByGrid();
         //weatherService.callWeatherWarningApi();
     }
 

@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ForecastGrib {
-    private Integer baseDate;
+    private String baseDate;
     private String baseTime;
     private String category;
-    private Integer obsrValue;
+    private Float obsrValue;
 }

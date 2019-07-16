@@ -154,7 +154,6 @@ public class RegionService {
         return true;
     }
 
-    // TODO : DgraphClient dao쪽에서 선언하도록 수정
     public void addRegionNode() {
         Transaction transaction = dgraphClient.newTransaction();
 

@@ -2,23 +2,25 @@ package com.example.realpilot.model.date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Year implements Serializable {
+public class Year {
     private String uid;
+
     private Integer year;
-    private List<Month> months; // = new ArrayList<>();
+
+    private List<Month> months; //= new ArrayList<>();
+
+    public void setDate(int currentYear, List<Month> monthList) {
+        this.year = currentYear;
+        this.months = monthList;
+    }
 
 
-    private static final Logger log = LoggerFactory.getLogger(Year.class);
+    /*private static final Logger log = LoggerFactory.getLogger(Year.class);
 
     private static final int TOTAL_TIME_OF_DAY = 24;
     private static final int TOTAL_MONTHS_OF_YEAR = 12;
@@ -63,5 +65,5 @@ public class Year implements Serializable {
         this.months = monthList;
 
         return this;
-    }
+    }*/
 }

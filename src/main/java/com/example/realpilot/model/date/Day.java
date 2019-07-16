@@ -2,13 +2,19 @@ package com.example.realpilot.model.date;
 
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Day implements Serializable {
+public class Day {
     private String uid;
+
     private Integer day;
+
     private List<Hour> hours = new ArrayList<>();
+
+    public void setDate(int d, List<Hour> hourList) {
+        this.day = d;
+        this.hours = hourList;
+    }
 }

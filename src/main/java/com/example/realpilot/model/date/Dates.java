@@ -7,14 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Hour {
+public class Dates {
     private String uid;
 
+    private Integer year;
+    private Integer month;
+    private Integer day;
     private Integer hour;
 
+    private List<Month> months;
+    private List<Year> years = new ArrayList<>();
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
-
-    public void setDate(int h) {
-        this.hour = h;
-    }
 }

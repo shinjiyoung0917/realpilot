@@ -11,13 +11,15 @@ import java.util.Optional;
 @Data
 public class Sido {
     private String uid;
+
     private String hCode;
     private String sidoName;
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
+
     private List<Sigungu> sigungus = new ArrayList<>();
-    private List<HourlyWeather> hourlyWeather;
+    private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
 
     public Sido setRegion(RegionData regionData) {
         this.hCode = regionData.getHCode();
