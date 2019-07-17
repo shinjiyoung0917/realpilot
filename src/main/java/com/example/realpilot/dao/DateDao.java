@@ -46,8 +46,10 @@ public class DateDao<T> {
                 "tmX: float @index(float) .\n" +
                 "tmY: float @index(float) .\n" +
                 "baseDate: string @index(fulltext) .\n" +
-                "baseTime: string @index(fulltext) .\n";
-                //+ "hourlyWeather: uid @reverse .";
+                "baseTime: string @index(fulltext) .\n" +
+                "fcstDate: string @index(fulltext) .\n" +
+                "fcstTime: string @index(fulltext) .\n" +
+                "hourlyWeathers: uid @reverse .";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -117,13 +119,7 @@ public class DateDao<T> {
         operations.mutate(transaction, date);
     }
 
-    public Hour getCurrentTimeNode() {
-        Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1;
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-
+    public Hour getDateNode(int year, int month, int day, int hour) {
         String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
                 " currentDate(func: eq(year, $year)) {\n" +
                 "    year\n" +
@@ -154,8 +150,8 @@ public class DateDao<T> {
         return currentDate.get(0).getMonths().get(0).getDays().get(0).getHours().get(0);
     }
 
-    public void updateDateNode(T object) {
+    public void updateDateNode(T date) {
         Transaction transaction = dgraphClient.newTransaction();
-        operations.mutate(transaction, object);
+        operations.mutate(transaction, date);
     }
 }

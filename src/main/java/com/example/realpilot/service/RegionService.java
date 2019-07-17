@@ -2,7 +2,7 @@ package com.example.realpilot.service;
 
 import com.example.realpilot.dao.RegionDao;
 import com.example.realpilot.excelModel.RegionData;
-import com.example.realpilot.externalApiModel.tmCoordinate.OpenModel;
+import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
 import com.example.realpilot.utilAndConfig.*;
 import io.dgraph.DgraphClient;
@@ -165,14 +165,14 @@ public class RegionService {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
         // TODO: null말고 new로 초기화 해주기
-        OpenModel openModel = null;
+        TmCoordinateTopModel tmCoordinateTopModel = null;
         for(SidoList sido : SidoList.values()) {
             log.info("[Service] callTmCoordinateApi - 시도 이름 : " + sido.getSidoName());
 
             URI uri = URI.create(tmCoordinateApiUrl + "?ServiceKey=" + serviceKey + "&umdName=" + sido.getSidoName() + "&numOfRows=" + 600 + "&_returnType=json");
 
             try {
-                openModel = restTemplate.getForObject(uri, OpenModel.class);
+                tmCoordinateTopModel = restTemplate.getForObject(uri, TmCoordinateTopModel.class);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -183,7 +183,7 @@ public class RegionService {
                 e.printStackTrace();
             }
 
-            parseTmCoordinate(openModel.getList());
+            parseTmCoordinate(tmCoordinateTopModel.getList());
         }
     }
 

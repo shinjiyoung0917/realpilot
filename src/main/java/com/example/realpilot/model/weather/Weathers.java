@@ -2,6 +2,7 @@ package com.example.realpilot.model.weather;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -10,6 +11,8 @@ public class Weathers {
 
     private String baseDate;
     private String baseTime;
+    private String fcstDate;
+    private String fcstTime;
 
     private Float POP;
     private Float PTY;
@@ -31,5 +34,5 @@ public class Weathers {
 
     private Float LGT;
 
-    private List<HourlyWeather> hourlyWeathers;
+    private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
 }

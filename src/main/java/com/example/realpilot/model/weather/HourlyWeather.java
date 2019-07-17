@@ -2,67 +2,79 @@ package com.example.realpilot.model.weather;
 
 import lombok.Data;
 
-import java.util.List;
+import java.util.Map;
 
 @Data
 public class HourlyWeather extends Weathers {
-    public void setHourlyWeather(List<String> categories, List<Float> obsrValues, String baseDate, String baseTime) {
+    public void setHourlyWeather(Map<String, Float> categoryValueMap, String baseDate, String baseTime) {
         this.setBaseDate(baseDate);
         this.setBaseTime(baseTime);
 
-        int listSize = categories.size();
-        for(int i=0 ; i<listSize ; ++i) {
-            switch (categories.get(i)) {
+        setCategoryValue(categoryValueMap);
+    }
+
+    public void setHourlyWeather(Map<String, Float> categoryValueMap, String baseDate, String baseTime, String fcstDate, String fcstTime) {
+        this.setBaseDate(baseDate);
+        this.setBaseTime(baseTime);
+        this.setFcstDate(fcstDate);
+        this.setFcstTime(fcstTime);
+
+        setCategoryValue(categoryValueMap);
+    }
+
+    public void setCategoryValue(Map<String, Float> categoryValueMap) {
+        for(Map.Entry<String, Float> entry : categoryValueMap.entrySet()) {
+            switch (entry.getKey()) {
                 case "POP":
-                    this.setPOP(obsrValues.get(i));
+                    this.setPOP(entry.getValue());
                     break;
                 case "PTY":
-                    this.setPTY(obsrValues.get(i));
+                    this.setPTY(entry.getValue());
                     break;
                 case "R06":
-                    this.setR06(obsrValues.get(i));
+                    this.setR06(entry.getValue());
                     break;
                 case "REH":
-                    this.setREH(obsrValues.get(i));
+                    this.setREH(entry.getValue());
                     break;
                 case "S06":
-                    this.setS06(obsrValues.get(i));
+                    this.setS06(entry.getValue());
                     break;
                 case "SKY":
-                    this.setSKY(obsrValues.get(i));
+                    this.setSKY(entry.getValue());
                     break;
                 case "T3H":
-                    this.setT3H(obsrValues.get(i));
+                    this.setT3H(entry.getValue());
                     break;
                 case "TMN":
-                    this.setTMN(obsrValues.get(i));
+                    this.setTMN(entry.getValue());
                     break;
                 case "TMX":
-                    this.setTMX(obsrValues.get(i));
+                    this.setTMX(entry.getValue());
                     break;
                 case "UUU":
-                    this.setUUU(obsrValues.get(i));
+                    this.setUUU(entry.getValue());
                     break;
                 case "VVV":
-                    this.setVVV(obsrValues.get(i));
+                    this.setVVV(entry.getValue());
                     break;
                 case "WAV":
-                    this.setWAV(obsrValues.get(i));
+                    this.setWAV(entry.getValue());
                     break;
                 case "VEC":
-                    this.setVEC(obsrValues.get(i));
+                    this.setVEC(entry.getValue());
                     break;
                 case "WSD":
-                    this.setWSD(obsrValues.get(i));
+                    this.setWSD(entry.getValue());
                     break;
                 case "T1H":
-                    this.setT1H(obsrValues.get(i));
+                    this.setT1H(entry.getValue());
                     break;
                 case "RN1":
-                    this.setRN1(obsrValues.get(i));
+                    this.setRN1(entry.getValue());
                     break;
                 case "LGT":
-                    this.setLGT(obsrValues.get(i));
+                    this.setLGT(entry.getValue());
                     break;
             }
         }

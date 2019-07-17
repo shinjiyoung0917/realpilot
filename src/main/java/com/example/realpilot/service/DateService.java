@@ -55,18 +55,28 @@ public class DateService {
             hourString = String.valueOf(hour);
         }
 
-        if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
+        if(minute < 10) {
+            minuteString = "0" + minute;
+        } else {
+            minuteString = String.valueOf(minute);
+        }
+
+        /*if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
             if (minute >= 0 && minute <= 59) {
                 minuteString = "00";
             }
-        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME_DATA)) {
+        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
             if (minute >= 0 && minute < 30) {
                 minuteString = "00";
             } else {
                 minuteString = "30";
             }
-        }
+        }*/
 
-        return hourString + minuteString;
+        // 동네예보는 지정돼있는 base_time 내에서 분을 제외한 시만 맞으면 호출됨
+        // ex) 현재 시각 11:20일 경우 0830, 1105 등은 호출되고, 1000, 1030 등은 호출 안됨
+        // 대신 API 제공 시간(base_time + 10분) 이후에만 호출 가능
+
+       return hourString + minuteString;
     }
 }
