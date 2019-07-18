@@ -5,6 +5,8 @@ import com.example.realpilot.dao.RegionDao;
 import com.example.realpilot.dao.WeatherDao;
 import com.example.realpilot.externalApiModel.forecastGrib.ForecastGrib;
 import com.example.realpilot.externalApiModel.forecastGrib.ForecastGribTopModel;
+import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpace;
+import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpaceTopModel;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTime;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTimeTopModel;
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarningTopModel;
@@ -46,6 +48,8 @@ public class WeatherService {
     private String forecastGribApiUrl;
     @Value("${forecastTime.api.url}")
     private String forecastTimeApiUrl;
+    @Value("${forecastSpace.api.url}")
+    private String forecastSpaceApiUrl;
     @Value("${weatherWarning.api.url}")
     private String weatherWarningApiUrl;
     @Value("${api.serviceKey}")
@@ -60,6 +64,7 @@ public class WeatherService {
 
         ForecastGribTopModel forecastGribTopModel = new ForecastGribTopModel();
         ForecastTimeTopModel forecastTimeTopModel = new ForecastTimeTopModel();
+        ForecastSpaceTopModel forecastSpaceTopModel = new ForecastSpaceTopModel();
 
        for(List<Integer> grid : gridSet) {
            Integer gridX = grid.get(GRID_X_IDNEX);
@@ -67,19 +72,20 @@ public class WeatherService {
 
            List<Regions> regionByGrid = regionDao.getRegionNodeByGrid(gridX, gridY);
 
-           // API 호출은 초단기실황의 경우에 40분 이후, 초단기예보의 경우에 45분 이후에 호출하도록
            String baseDate = dateService.makeBaseDateFormat();
-           String baseTime = "1000";
-           //String baseTime = dateService.makeBaseTimeFormat(ExternalWeatherApi.FORECAST_GRIB);
+           String baseTime = dateService.makeBaseTimeFormat(ExternalWeatherApi.FORECAST_GRIB);
+           baseTime = "0800";
 
-           URI forecastGribUri = URI.create(forecastGribApiUrl + "?ServiceKey=" + serviceKey + "&base_date=" + baseDate + "&base_time=" + baseTime + "&nx=" + gridX + "&ny=" + gridY + "&numOfRows=300&_type=json");
-           URI forecastTimeUri = URI.create(forecastTimeApiUrl + "?ServiceKey=" + serviceKey + "&base_date=" + baseDate + "&base_time=" + baseTime + "&nx=" + gridX + "&ny=" + gridY + "&numOfRows=300&_type=json");
+           String parameters = "?ServiceKey=" + serviceKey + "&base_date=" + baseDate + "&base_time=" + baseTime + "&nx=" + gridX + "&ny=" + gridY + "&numOfRows=300&_type=json";
+           URI forecastGribUri = URI.create(forecastGribApiUrl + parameters);
+           URI forecastTimeUri = URI.create(forecastTimeApiUrl + parameters);
+           URI forecastSpaceUri = URI.create(forecastSpaceApiUrl + parameters);
 
            //callForecastGribApi(forecastGribTopModel, forecastGribUri, baseDate, baseTime, regionByGrid);
            callForecastTimeApi(forecastTimeTopModel, forecastTimeUri, baseDate, baseTime, regionByGrid);
 
-
-
+           baseTime = dateService.makeBaseTimeFormat(ExternalWeatherApi.FORECAST_SPACE);
+           callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionByGrid);
        }
     }
 
@@ -122,7 +128,7 @@ public class WeatherService {
 
         List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
 
-        int forecastTimeCount = getForecastTimeCount(baseTime);
+        int fcstTimeCount = getFcstTimeCountForForecastTime(baseTime); // 예보시간의 구간 수 (2개 or 3개 or 4개)
         int index = 0;
 
         Map<String, Float> map1 = new HashMap<>();
@@ -142,23 +148,23 @@ public class WeatherService {
             log.info("[Service] callForecastTimeApi - value : " + forecastTime.getFcstValue());
 
             fcstDate = forecastTime.getFcstDate();
-            if(index % forecastTimeCount ==  0) {
+            if(index % fcstTimeCount ==  0) {
                 map1.put(forecastTime.getCategory(), forecastTime.getFcstValue());
                 fcstTime1 = forecastTime.getFcstTime();
-            } else if(index % forecastTimeCount ==  1) {
+            } else if(index % fcstTimeCount ==  1) {
                 map2.put(forecastTime.getCategory(), forecastTime.getFcstValue());
                 fcstTime2 = forecastTime.getFcstTime();
-            } else if(index % forecastTimeCount ==  2) {
+            } else if(index % fcstTimeCount ==  2) {
                 map3.put(forecastTime.getCategory(), forecastTime.getFcstValue());
                 fcstTime3 = forecastTime.getFcstTime();
-            } else if(index % forecastTimeCount ==  3) {
+            } else if(index % fcstTimeCount ==  3) {
                 map4.put(forecastTime.getCategory(), forecastTime.getFcstValue());
                 fcstTime4 = forecastTime.getFcstTime();
             }
             ++index;
         }
 
-        for(int i=0 ; i<forecastTimeCount ; ++i) {
+        for(int i=0 ; i < fcstTimeCount ; ++i) {
             HourlyWeather hourlyWeather = new HourlyWeather();
             if(i == 0) {
                 hourlyWeather.setHourlyWeather(map1, baseDate, baseTime, fcstDate, fcstTime1);
@@ -185,6 +191,29 @@ public class WeatherService {
         }
     }
 
+    private void callForecastSpaceApi(ForecastSpaceTopModel forecastSpaceTopModel, URI forecastSpaceUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
+        try {
+            forecastSpaceTopModel = restTemplate.getForObject(forecastSpaceUri, ForecastSpaceTopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
+
+        int fcstTimeCount = getFcstTimeCountForForecastSpace(baseTime);
+        int index = 0;
+
+        String fcstTime = "";
+
+        // 이전 row의 fcstTime과 현재 row의 fcstTime을 비교하고, 같으면 같은 객체에, 다르면 다른 객체 새로 생성해 저장
+        for(ForecastSpace forecastSpace : forecastSpaceTopModel.getResponse().getBody().getItems().getItem()) {
+           fcstTime = forecastSpace.getFcstTime();
+
+            ++index;
+        }
+
+    }
+
     private void connectRegionAndWeatherAndDateNode(int year, int month, int day, int hour, String date, String time, List<Regions> regionByGrid, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
         Hour hourNode = dateDao.getDateNode(year, month, day, hour);
         HourlyWeather foundHourlyWeather = new HourlyWeather();
@@ -209,20 +238,57 @@ public class WeatherService {
         log.info("[Service] connectRegionAndWeatherAndDateNode - " + hourNode.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료");
     }
 
-    private int getForecastTimeCount(String baseTime) {
+    private int getFcstTimeCountForForecastTime(String baseTime) {
         int count = 0;
         Integer test = Integer.parseInt(baseTime);
-        Integer time = Integer.parseInt(baseTime.substring(0, 2));
-        if(time % 3 == 0) {
+        Integer baseHour = Integer.parseInt(baseTime.substring(0, 2));
+
+        if(baseHour % 3 == 0) {
             count = 3;
-        } else if(time % 3 == 1) {
+        } else if(baseHour % 3 == 1) {
             count = 2;
-        } else if(time % 3 == 2) {
+        } else if(baseHour % 3 == 2) {
             count = 4;
         }
 
         return count;
     }
+
+    private int getFcstTimeCountForForecastSpace(String baseTime) {
+        int count = 0;
+        Integer baseHour = Integer.parseInt(baseTime.substring(0, 2));
+
+        switch (baseHour) {
+            case 2:
+                count = 15;
+                break;
+            case 5:
+                count = 22;
+                break;
+            case 8:
+                count = 21;
+                break;
+            case 11:
+                count = 20;
+                break;
+            case 14:
+                count = 19;
+                break;
+            case 17:
+                count = 18;
+                break;
+            case 20:
+                count = 17;
+                break;
+            case 23:
+                count = 16;
+                break;
+
+        }
+
+        return count;
+    }
+
 
     public void callWeatherWarningApi() {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());

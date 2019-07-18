@@ -86,38 +86,34 @@ public class WeatherDao {
 
 
 /*
-지역-날짜에 의한 날씨 찾는 쿼리
+지역과 날짜에 의한 날씨 찾는 쿼리
 {
-  hourlyWeatherByRegion as var1(func: eq(umdName, "장충동")) {
-    hourlyWeathers {
-      expand(_all_)
-  	}
+  hourlyWeatherByRegion(func: eq(umdName, "장충동")) {
+    uid
+    umdName
+    var1 as hourlyWeathers {
+      uid
+    }
   }
 
-hourlyWeatherByDate as var2(func: eq(year, 2019)) {
+	hourlyWeatherByDate(func: eq(year, 2019)) {
+    year
     months @filter(eq(month, 7)) {
-      days @filter(eq(day, 17)) {
+      month
+      days @filter(eq(day, 18)) {
+        day
         hours @filter(eq(hour, 11)) {
-          hourlyWeathers {
-          	expand(_all_)
+          hour
+          var2 as hourlyWeathers {
+            uid
           }
         }
       }
     }
   }
 
-  hourlyWeatherByRegionAndDate(func: uid(hourlyWeatherByRegion, hourlyWeatherByDate)) {
-    uid
-    year
-    month
-    day
-    hour
-    sidoName
-    sggName
-    umdName
-    hourlyWeathers {
-      expand(_all_)
-    }
+  hourlyWeatherByRegionAndDate(func: uid(var1)) @filter(uid(var2)) {
+    expand(_all_)
   }
 }
 */

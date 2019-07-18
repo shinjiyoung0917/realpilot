@@ -46,6 +46,26 @@ public class DateService {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
+        if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+            if(hour >= 2 && hour < 5) {
+                hour = 2;
+            } else if(hour >= 5 && hour < 8) {
+                hour = 5;
+            } else if(hour >= 8 && hour < 11) {
+                hour = 8;
+            } else if(hour >= 11 && hour < 14) {
+                hour = 11;
+            } else if(hour >= 14 && hour < 17) {
+                hour = 14;
+            } else if(hour >= 17 && hour < 20) {
+                hour = 17;
+            } else if(hour >= 20 && hour < 23) {
+                hour = 20;
+            } else if(hour >= 23 && hour < 2) {
+                hour = 23;
+            }
+        }
+
         String hourString = "";
         String minuteString = "";
 
@@ -72,10 +92,6 @@ public class DateService {
                 minuteString = "30";
             }
         }*/
-
-        // 동네예보는 지정돼있는 base_time 내에서 분을 제외한 시만 맞으면 호출됨
-        // ex) 현재 시각 11:20일 경우 0830, 1105 등은 호출되고, 1000, 1030 등은 호출 안됨
-        // 대신 API 제공 시간(base_time + 10분) 이후에만 호출 가능
 
        return hourString + minuteString;
     }
