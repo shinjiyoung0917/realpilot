@@ -33,9 +33,10 @@ public class WeatherDao {
         DgraphProto.Response res = null;
         if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
             res = queryForForecastGrib(uid, date, time);
-        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-            res = queryForForecastTime(uid, date, time);
+        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME) || api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+            res = queryForForecastTimeOrSpace(uid, date, time);
         }
+
         // TODO: DB에서 가져온 res 객체 null일 경우 처리
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<Weathers> hourlyWeatherOfRegion =  weatherRootQuery.getHourlyWeatherOfRegion();
@@ -63,7 +64,7 @@ public class WeatherDao {
         return res;
     }
 
-    private DgraphProto.Response queryForForecastTime(String uid, String fcstDate, String fcstTime) {
+    private DgraphProto.Response queryForForecastTimeOrSpace(String uid, String fcstDate, String fcstTime) {
         String query = "query hourlyWeatherOfRegion($id: string, $fcstDate: string, $fcstTime: string) {\n" +
                 " hourlyWeatherOfRegion(func: uid($id)) {\n" +
                 "    hourlyWeathers @filter(eq(fcstDate, $fcstDate) and eq(fcstTime, $fcstTime)) {\n" +

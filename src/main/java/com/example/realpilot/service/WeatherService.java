@@ -9,6 +9,8 @@ import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpace;
 import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpaceTopModel;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTime;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTimeTopModel;
+import com.example.realpilot.externalApiModel.kweatherDay7.Area;
+import com.example.realpilot.externalApiModel.kweatherDay7.KweatherDay7TopModel;
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarningTopModel;
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarning;
 import com.example.realpilot.model.date.Hour;
@@ -54,6 +56,8 @@ public class WeatherService {
     private String weatherWarningApiUrl;
     @Value("${api.serviceKey}")
     private String serviceKey;
+    @Value("${kweatherDay7.api.url}")
+    private String kweatherDay7ApiUrl;
 
     private Integer GRID_X_IDNEX = 0;
     private Integer GRID_Y_INDEX = 1;
@@ -65,6 +69,7 @@ public class WeatherService {
         ForecastGribTopModel forecastGribTopModel = new ForecastGribTopModel();
         ForecastTimeTopModel forecastTimeTopModel = new ForecastTimeTopModel();
         ForecastSpaceTopModel forecastSpaceTopModel = new ForecastSpaceTopModel();
+        KweatherDay7TopModel kweatherDay7TopModel = new KweatherDay7TopModel();
 
        for(List<Integer> grid : gridSet) {
            Integer gridX = grid.get(GRID_X_IDNEX);
@@ -80,12 +85,16 @@ public class WeatherService {
            URI forecastGribUri = URI.create(forecastGribApiUrl + parameters);
            URI forecastTimeUri = URI.create(forecastTimeApiUrl + parameters);
            URI forecastSpaceUri = URI.create(forecastSpaceApiUrl + parameters);
+           URI kweatherDay7Uri = URI.create(kweatherDay7ApiUrl);
 
            //callForecastGribApi(forecastGribTopModel, forecastGribUri, baseDate, baseTime, regionByGrid);
-           callForecastTimeApi(forecastTimeTopModel, forecastTimeUri, baseDate, baseTime, regionByGrid);
+           //callForecastTimeApi(forecastTimeTopModel, forecastTimeUri, baseDate, baseTime, regionByGrid);
 
            baseTime = dateService.makeBaseTimeFormat(ExternalWeatherApi.FORECAST_SPACE);
-           callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionByGrid);
+           baseTime = "0800";
+           //callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionByGrid);
+
+           callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri, regionByGrid);
        }
     }
 
@@ -109,7 +118,7 @@ public class WeatherService {
         HourlyWeather hourlyWeather = new HourlyWeather();
         hourlyWeather.setHourlyWeather(categoryValueMap, baseDate, baseTime);
 
-        // TODO : 날짜, 시간 얻어오는 로직 중복 해결하기
+        // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
         Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);
         int month = calendar.get(Calendar.MONTH) + 1;
@@ -126,20 +135,16 @@ public class WeatherService {
             e.printStackTrace();
         }
 
-        List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
-
-        int fcstTimeCount = getFcstTimeCountForForecastTime(baseTime); // 예보시간의 구간 수 (2개 or 3개 or 4개)
+        int fcstTimeCount = getFcstTimeCount(baseTime); // 예보시간의 구간 수 (2개 or 3개 or 4개)
         int index = 0;
 
-        Map<String, Float> map1 = new HashMap<>();
-        Map<String, Float> map2 = new HashMap<>();
-        Map<String, Float> map3 = new HashMap<>();
-        Map<String, Float> map4 = new HashMap<>();
+        Map<String, Float>[] categoryValueMapArray = new Map[4];
+        for(int i=0 ; i < categoryValueMapArray.length ; ++i) {
+            categoryValueMapArray[i] = new HashMap<>();
+        }
+
         String fcstDate = "";
-        String fcstTime1 = "";
-        String fcstTime2 = "";
-        String fcstTime3 = "";
-        String fcstTime4 = "";
+        String[] fcstTimeArray = new String[4];
 
         // TODO: 반복문 돌면서 ~getItem 계속 호출되니 미리 정의해두고 사용하기
         for (ForecastTime forecastTime : forecastTimeTopModel.getResponse().getBody().getItems().getItem()) {
@@ -149,43 +154,44 @@ public class WeatherService {
 
             fcstDate = forecastTime.getFcstDate();
             if(index % fcstTimeCount ==  0) {
-                map1.put(forecastTime.getCategory(), forecastTime.getFcstValue());
-                fcstTime1 = forecastTime.getFcstTime();
+                categoryValueMapArray[0].put(forecastTime.getCategory(), forecastTime.getFcstValue());
+                fcstTimeArray[0] = forecastTime.getFcstTime();
             } else if(index % fcstTimeCount ==  1) {
-                map2.put(forecastTime.getCategory(), forecastTime.getFcstValue());
-                fcstTime2 = forecastTime.getFcstTime();
+                categoryValueMapArray[1].put(forecastTime.getCategory(), forecastTime.getFcstValue());
+                fcstTimeArray[1] = forecastTime.getFcstTime();
             } else if(index % fcstTimeCount ==  2) {
-                map3.put(forecastTime.getCategory(), forecastTime.getFcstValue());
-                fcstTime3 = forecastTime.getFcstTime();
+                categoryValueMapArray[2].put(forecastTime.getCategory(), forecastTime.getFcstValue());
+                fcstTimeArray[2] = forecastTime.getFcstTime();
             } else if(index % fcstTimeCount ==  3) {
-                map4.put(forecastTime.getCategory(), forecastTime.getFcstValue());
-                fcstTime4 = forecastTime.getFcstTime();
+                categoryValueMapArray[3].put(forecastTime.getCategory(), forecastTime.getFcstValue());
+                fcstTimeArray[3] = forecastTime.getFcstTime();
             }
             ++index;
         }
 
+        List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
+
         for(int i=0 ; i < fcstTimeCount ; ++i) {
             HourlyWeather hourlyWeather = new HourlyWeather();
             if(i == 0) {
-                hourlyWeather.setHourlyWeather(map1, baseDate, baseTime, fcstDate, fcstTime1);
+                hourlyWeather.setHourlyWeather(categoryValueMapArray[0], baseDate, baseTime, fcstDate, fcstTimeArray[0]);
             } else  if(i == 1) {
-                hourlyWeather.setHourlyWeather(map2, baseDate, baseTime, fcstDate, fcstTime2);
+                hourlyWeather.setHourlyWeather(categoryValueMapArray[1], baseDate, baseTime, fcstDate, fcstTimeArray[1]);
             } else  if(i == 2) {
-                hourlyWeather.setHourlyWeather(map3, baseDate, baseTime, fcstDate, fcstTime3);
+                hourlyWeather.setHourlyWeather(categoryValueMapArray[2], baseDate, baseTime, fcstDate, fcstTimeArray[2]);
             } else  if(i == 3) {
-                hourlyWeather.setHourlyWeather(map4, baseDate, baseTime, fcstDate, fcstTime4);
+                hourlyWeather.setHourlyWeather(categoryValueMapArray[3], baseDate, baseTime, fcstDate, fcstTimeArray[3]);
             }
             hourlyWeatherList.add(hourlyWeather);
         }
 
         for(HourlyWeather hourlyWeather : hourlyWeatherList) {
-            // TODO : 날짜, 시간 얻어오는 로직 중복 해결하기
-            Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH) + 1;
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
+            int year = Integer.parseInt(fcstDate.substring(0, 4));
+            int month = Integer.parseInt(fcstDate.substring(4, 6));
+            int day = Integer.parseInt(fcstDate.substring(6, 8));
             String fcstTime = hourlyWeather.getFcstTime();
-            Integer hour = Integer.parseInt(fcstTime.substring(0, 2));
+            int hour = Integer.parseInt(fcstTime.substring(0, 2));
 
             connectRegionAndWeatherAndDateNode(year, month, day, hour, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
         }
@@ -198,18 +204,54 @@ public class WeatherService {
             e.printStackTrace();
         }
 
-        List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
-
-        int fcstTimeCount = getFcstTimeCountForForecastSpace(baseTime);
         int index = 0;
 
-        String fcstTime = "";
+        String prevFcstDate = "";
+        String prevFcstTime = "";
 
-        // 이전 row의 fcstTime과 현재 row의 fcstTime을 비교하고, 같으면 같은 객체에, 다르면 다른 객체 새로 생성해 저장
+        Map<String, Float> categoryValueMap = new HashMap<>();
+        List<Map<String, Float>> categoryValueMapList = new ArrayList<>();
+        List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
+
         for(ForecastSpace forecastSpace : forecastSpaceTopModel.getResponse().getBody().getItems().getItem()) {
-           fcstTime = forecastSpace.getFcstTime();
+            HourlyWeather hourlyWeather = new HourlyWeather();
+            if(!prevFcstTime.equals(forecastSpace.getFcstTime()) && index != 0) {
+                hourlyWeather.setHourlyWeather(categoryValueMap, baseDate, baseTime, prevFcstDate, prevFcstTime);
+                hourlyWeatherList.add(hourlyWeather);
+                categoryValueMap = new HashMap<>();
+
+            } else {
+                categoryValueMap.put(forecastSpace.getCategory(), forecastSpace.getFcstValue());
+                categoryValueMapList.add(categoryValueMap);
+            }
+            prevFcstDate = forecastSpace.getFcstDate();
+            prevFcstTime = forecastSpace.getFcstTime();
 
             ++index;
+        }
+
+        for(HourlyWeather hourlyWeather : hourlyWeatherList) {
+            // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
+            String fcstDate = hourlyWeather.getFcstDate();
+            int year = Integer.parseInt(fcstDate.substring(0, 4));
+            int month = Integer.parseInt(fcstDate.substring(4, 6));
+            int day = Integer.parseInt(fcstDate.substring(6, 8));
+            String fcstTime = hourlyWeather.getFcstTime();
+            int hour = Integer.parseInt(fcstTime.substring(0, 2));
+
+            connectRegionAndWeatherAndDateNode(year, month, day, hour, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
+        }
+    }
+
+    private void callKweatherDay7Api(KweatherDay7TopModel kweatherDay7TopModel, URI kweatherDay7Uri, List<Regions> regionByGrid) {
+        try {
+            kweatherDay7TopModel = restTemplate.getForObject(kweatherDay7Uri, KweatherDay7TopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (Area area : kweatherDay7TopModel.getAreas()) {
+
         }
 
     }
@@ -228,9 +270,10 @@ public class WeatherService {
                 foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
             } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
                 foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+            } else if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+                foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
             }
 
-            // TODO : 날씨-날짜 연결하는 것 같은데 DB에서 hour predicate 확인하면 hourlyWeathers predicate가 없음, 노드 더블클릭해서 확인해보면 연결은 되어있음(?)
             hourNode.getHourlyWeathers().add(foundHourlyWeather);
         }
         dateDao.updateDateNode(hourNode);
@@ -238,9 +281,8 @@ public class WeatherService {
         log.info("[Service] connectRegionAndWeatherAndDateNode - " + hourNode.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료");
     }
 
-    private int getFcstTimeCountForForecastTime(String baseTime) {
+    private int getFcstTimeCount(String baseTime) {
         int count = 0;
-        Integer test = Integer.parseInt(baseTime);
         Integer baseHour = Integer.parseInt(baseTime.substring(0, 2));
 
         if(baseHour % 3 == 0) {
@@ -253,42 +295,6 @@ public class WeatherService {
 
         return count;
     }
-
-    private int getFcstTimeCountForForecastSpace(String baseTime) {
-        int count = 0;
-        Integer baseHour = Integer.parseInt(baseTime.substring(0, 2));
-
-        switch (baseHour) {
-            case 2:
-                count = 15;
-                break;
-            case 5:
-                count = 22;
-                break;
-            case 8:
-                count = 21;
-                break;
-            case 11:
-                count = 20;
-                break;
-            case 14:
-                count = 19;
-                break;
-            case 17:
-                count = 18;
-                break;
-            case 20:
-                count = 17;
-                break;
-            case 23:
-                count = 16;
-                break;
-
-        }
-
-        return count;
-    }
-
 
     public void callWeatherWarningApi() {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
