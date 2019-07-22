@@ -15,8 +15,11 @@ import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarningTopMo
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarning;
 import com.example.realpilot.model.date.Hour;
 import com.example.realpilot.model.region.Regions;
+import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
+import com.example.realpilot.utilAndConfig.DateUnit;
 import com.example.realpilot.utilAndConfig.ExternalWeatherApi;
+import com.example.realpilot.utilAndConfig.RegionUnit;
 import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +121,9 @@ public class WeatherService {
         HourlyWeather hourlyWeather = new HourlyWeather();
         hourlyWeather.setHourlyWeather(categoryValueMap, baseDate, baseTime);
 
-        // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
-        Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1;
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
-        connectRegionAndWeatherAndDateNode(year, month, day, hour, baseDate, baseTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_GRIB);
+        connectRegionAndWeatherAndDateNode(dateMap, baseDate, baseTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_GRIB);
     }
 
     private void callForecastTimeApi(ForecastTimeTopModel forecastTimeTopModel, URI forecastTimeUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
@@ -186,14 +184,10 @@ public class WeatherService {
         }
 
         for(HourlyWeather hourlyWeather : hourlyWeatherList) {
-            // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
-            int year = Integer.parseInt(fcstDate.substring(0, 4));
-            int month = Integer.parseInt(fcstDate.substring(4, 6));
-            int day = Integer.parseInt(fcstDate.substring(6, 8));
             String fcstTime = hourlyWeather.getFcstTime();
-            int hour = Integer.parseInt(fcstTime.substring(0, 2));
+            Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
 
-            connectRegionAndWeatherAndDateNode(year, month, day, hour, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
+            connectRegionAndWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
         }
     }
 
@@ -231,15 +225,12 @@ public class WeatherService {
         }
 
         for(HourlyWeather hourlyWeather : hourlyWeatherList) {
-            // TODO: 날짜, 시간 얻어오는 로직 중복 해결하기
             String fcstDate = hourlyWeather.getFcstDate();
-            int year = Integer.parseInt(fcstDate.substring(0, 4));
-            int month = Integer.parseInt(fcstDate.substring(4, 6));
-            int day = Integer.parseInt(fcstDate.substring(6, 8));
             String fcstTime = hourlyWeather.getFcstTime();
-            int hour = Integer.parseInt(fcstTime.substring(0, 2));
 
-            connectRegionAndWeatherAndDateNode(year, month, day, hour, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
+            Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
+
+            connectRegionAndWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
         }
     }
 
@@ -251,13 +242,41 @@ public class WeatherService {
         }
 
         for (Area area : kweatherDay7TopModel.getAreas()) {
+            String sidoName = "";
+            String sggName = "";
+            String umdName = "";
 
+            DailyWeather foundDailyWeather = new DailyWeather();
+
+            if(area.getAreaname1().equals("세종특별자치시")) {
+                sidoName = area.getAreaname1();
+                umdName = area.getAreaname2();
+                foundDailyWeather = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD);
+            } else {
+                if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
+                    sidoName = area.getAreaname2();
+                    foundDailyWeather = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO);
+                } else {
+                    sidoName = area.getAreaname1();
+                    sggName = area.getAreaname2() + " " + area.getAreaname3();
+                    sggName = sggName.replaceAll("-|NA", "");
+
+                    if (!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")) {
+                        umdName = area.getAreaname4();
+                        foundDailyWeather = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG_UMD);
+                    } else {
+                        foundDailyWeather = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG);
+                    }
+                }
+            }
+
+            // TODO: api 데이터 set
+            foundDailyWeather.setDailyWeather();
         }
-
     }
 
-    private void connectRegionAndWeatherAndDateNode(int year, int month, int day, int hour, String date, String time, List<Regions> regionByGrid, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
-        Hour hourNode = dateDao.getDateNode(year, month, day, hour);
+    private void connectRegionAndWeatherAndDateNode(Map<DateUnit, Integer> dateMap, String date, String time, List<Regions> regionByGrid, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
+        Hour hourNode = dateDao.getDateNode(dateMap);
         HourlyWeather foundHourlyWeather = new HourlyWeather();
 
         for (Regions region : regionByGrid) {
@@ -267,11 +286,11 @@ public class WeatherService {
 
             // region의 uid로 날씨 노드 조회
             if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-                foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
+                foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
             } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-                foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+                foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
             } else if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
-                foundHourlyWeather = weatherDao.getHourlyWeatherNode(region.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
+                foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
             }
 
             hourNode.getHourlyWeathers().add(foundHourlyWeather);

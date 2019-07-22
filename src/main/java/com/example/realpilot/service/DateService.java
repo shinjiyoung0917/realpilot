@@ -1,6 +1,7 @@
 package com.example.realpilot.service;
 
 import com.example.realpilot.dao.DateDao;
+import com.example.realpilot.utilAndConfig.DateUnit;
 import com.example.realpilot.utilAndConfig.ExternalWeatherApi;
 import io.dgraph.DgraphClient;
 import io.dgraph.Transaction;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class DateService {
@@ -94,5 +97,28 @@ public class DateService {
         }*/
 
        return hourString + minuteString;
+    }
+
+    public Map<DateUnit, Integer> getCurrentDate() {
+        Map<DateUnit, Integer> dateMap = new HashMap<>();
+
+        Calendar calendar = Calendar.getInstance();
+        dateMap.put(DateUnit.YEAR, calendar.get(Calendar.YEAR));
+        dateMap.put(DateUnit.MONTH, calendar.get(Calendar.MONTH) + 1);
+        dateMap.put(DateUnit.DAY, calendar.get(Calendar.DAY_OF_MONTH));
+        dateMap.put(DateUnit.HOUR, calendar.get(Calendar.HOUR_OF_DAY));
+
+        return dateMap;
+    }
+
+    public Map<DateUnit, Integer> getFcstDate(String fcstDate, String fcstTime) {
+        Map<DateUnit, Integer> dateMap = new HashMap<>();
+
+        dateMap.put(DateUnit.YEAR, Integer.parseInt(fcstDate.substring(0, 4)));
+        dateMap.put(DateUnit.MONTH, Integer.parseInt(fcstDate.substring(4, 6)));
+        dateMap.put(DateUnit.DAY, Integer.parseInt(fcstDate.substring(6, 8)));
+        dateMap.put(DateUnit.HOUR, Integer.parseInt(fcstTime.substring(0, 2)));
+
+        return dateMap;
     }
 }

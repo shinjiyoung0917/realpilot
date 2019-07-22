@@ -38,16 +38,20 @@ public class RegionData {
         } else if(columnIndex == AddressCodeFileIndex.CREATED_DATE_INDEX.getIndex()) {
             this.createdDate = parseByDataType(cell);
         }
+
         return keyString;
     }
 
     public String setRegionDataByGrid(XSSFCell cell, int columnIndex, String keyString, Optional<RegionData> originalRegionData) {
-      if(columnIndex == GridFileIndex.SIDO_NAME_INDEX.getIndex()) {
+        if(columnIndex == GridFileIndex.SIDO_NAME_INDEX.getIndex()) {
             String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
             keyString += stringCellValue;
         } else if(columnIndex == GridFileIndex.SIGUNGU_NAME_INDEX.getIndex()) {
             String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
-            keyString += stringCellValue;
+            // '세종특별자치시'의 경우 시도 이름=시군구 이름이기 때문에 생략하기 위함
+            if(!keyString.equals(stringCellValue)) {
+                keyString += stringCellValue;
+            }
         } else if(columnIndex == GridFileIndex.EUBMYEONDONG_NAME_INDEX.getIndex()) {
             String stringCellValue = cell.getStringCellValue().replaceAll(" ", "");
             keyString += stringCellValue;
@@ -55,7 +59,8 @@ public class RegionData {
           originalRegionData.ifPresent(regionData -> regionData.setGridX(Integer.parseInt(parseByDataType(cell))));
         } else if(columnIndex == GridFileIndex.GRID_Y_INDEX.getIndex()) {
           originalRegionData.ifPresent(regionData -> regionData.setGridY(Integer.parseInt(parseByDataType(cell))));
-      }
+        }
+
         return keyString;
     }
 

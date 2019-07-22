@@ -2,6 +2,7 @@ package com.example.realpilot.dao;
 
 import com.example.realpilot.model.date.*;
 import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.utilAndConfig.DateUnit;
 import com.google.gson.Gson;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphProto;
@@ -36,9 +37,9 @@ public class DateDao<T> {
                 "month: int @index(int) .\n" +
                 "day: int @index(int) .\n" +
                 "hour: int @index(int) .\n" +
-                "sidoName: string @index(fulltext) .\n" +
-                "sggName: string @index(fulltext) .\n" +
-                "umdName: string @index(fulltext) .\n" +
+                "sidoName: string @index(fulltext, trigram) .\n" +
+                "sggName: string @index(fulltext, trigram) .\n" +
+                "umdName: string @index(fulltext, trigram) .\n" +
                 "hCode: int @index(int) .\n" +
                 "createdDate: int @index(int) .\n" +
                 "gridX: int @index(int) .\n" +
@@ -49,7 +50,8 @@ public class DateDao<T> {
                 "baseTime: string @index(fulltext) .\n" +
                 "fcstDate: string @index(fulltext) .\n" +
                 "fcstTime: string @index(fulltext) .\n" +
-                "hourlyWeathers: uid @reverse .";
+                "hourlyWeathers: uid @reverse .\n" +
+                "dailyWeathers: uid @reverse .";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -59,7 +61,7 @@ public class DateDao<T> {
 
     public int getDateNodeCount(DgraphClient dgraphClient) {
         Calendar calendar = Calendar.getInstance();
-        int currentYear = calendar.get(calendar.YEAR);
+        int currentYear = calendar.get(Calendar.YEAR);
 
         String query = "query monthsCount($year: int) {\n" +
                 " monthsCount(func: eq(year, $year)) {\n" +
@@ -83,7 +85,7 @@ public class DateDao<T> {
 
     public void createDateNode(Transaction transaction) {
         Calendar calendar = Calendar.getInstance();
-        int currentYear = calendar.get(calendar.YEAR);
+        int currentYear = calendar.get(Calendar.YEAR);
 
         List<Hour> hourList = new ArrayList<>();
         for(int h = 0 ; h < TOTAL_TIME_OF_DAY ; ++h) {
@@ -119,7 +121,7 @@ public class DateDao<T> {
         operations.mutate(transaction, date);
     }
 
-    public Hour getDateNode(int year, int month, int day, int hour) {
+    public Hour getDateNode(Map<DateUnit, Integer> dateMap) {
         String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
                 " currentDate(func: eq(year, $year)) {\n" +
                 "    year\n" +
@@ -137,10 +139,10 @@ public class DateDao<T> {
                 "}";
 
         Map<String, String> var  = new LinkedHashMap<>();
-        var.put("$year", String.valueOf(year));
-        var.put("$month", String.valueOf(month));
-        var.put("$day", String.valueOf(day));
-        var.put("$hour", String.valueOf(hour));
+        var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
+        var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
+        var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
+        var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);

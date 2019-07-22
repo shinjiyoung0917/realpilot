@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-public class Sido {
+public class Sido { // TODO: extends Regions
     private String uid;
 
     private String hCode;
@@ -19,6 +19,7 @@ public class Sido {
     private Integer gridY;
 
     private List<Sigungu> sigungus = new ArrayList<>();
+    private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
 
     public Sido setRegion(RegionData regionData) {

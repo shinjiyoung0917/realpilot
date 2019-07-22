@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-public class Sigungu {
+public class Sigungu { // TODO: extends Regions
     private String uid;
 
     private String hCode;

@@ -34,11 +34,14 @@ public class RegionDao {
             // regionDataMap의 list 타입의 value => 행정동코드, 생성날짜, 격자X,Y, TM X,Y
             RegionData regionData = regionDataMap.get(regionName);
 
-            if(regionData.getSggName().equals("")) {
+            if(regionData.getSggName().equals("") && regionData.getUmdName().equals("")) {
                 Sido sido = new Sido();
                 prevSavedSido = sido.setRegion(regionData);
                 region.getSidos().add(prevSavedSido);
-            } else if(regionData.getUmdName().equals("")) {
+            } else if(regionData.getSggName().equals("") && !regionData.getUmdName().equals("")) { // '세종특별자치시'의 경우 시군구 이름이 빈 칸이기 때문에 읍면동으로 바로 연결해주기 위함
+                Eubmyeondong eubmyeondong = new Eubmyeondong();
+                eubmyeondong.setRegion(prevSavedSido, regionData);
+            } else if(!regionData.getSggName().equals("") && regionData.getUmdName().equals("")) {
                 Sigungu sigungu = new Sigungu();
                 prevSavedSigungu = sigungu.setRegion(prevSavedSido, regionData);
             } else {
@@ -81,6 +84,7 @@ public class RegionDao {
                 "}";
 
         Map<String, String> var = Collections.singletonMap("$uid", String.valueOf(uid));
+
         DgraphProto.Response res = dgraphClient.newTransaction().query(query);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
         List<Regions> regionByUid =  regionRootQuery.getRegionByUid();
@@ -92,5 +96,4 @@ public class RegionDao {
         Transaction transaction = dgraphClient.newTransaction();
         operations.mutate(transaction, region);
     }
-
 }

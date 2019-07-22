@@ -5,6 +5,7 @@ import com.example.realpilot.excelModel.RegionData;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
 import com.example.realpilot.utilAndConfig.*;
+import com.sun.org.apache.xpath.internal.operations.Equals;
 import io.dgraph.DgraphClient;
 import io.dgraph.Transaction;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -91,8 +92,9 @@ public class RegionService {
                 String keyString = "";
                 RegionData regionData = new RegionData();
 
-                for(int columnIndex = 0; columnIndex <= numberOfCells ; ++columnIndex) {
+                for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
+
                     if(cell == null) {
                         continue;
                     } else {
@@ -119,9 +121,9 @@ public class RegionService {
                 String keyString = "";
                 RegionData tempRegionData = new RegionData();
 
-
-                for(int columnIndex = 0; columnIndex <= numberOfCells ; ++columnIndex) {
+                for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
+
                     if(cell == null) {
                         continue;
                     } else {
@@ -164,8 +166,7 @@ public class RegionService {
     public void callTmCoordinateApi() {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
-        // TODO: null말고 new로 초기화 해주기
-        TmCoordinateTopModel tmCoordinateTopModel = null;
+        TmCoordinateTopModel tmCoordinateTopModel = new TmCoordinateTopModel();
         for(SidoList sido : SidoList.values()) {
             log.info("[Service] callTmCoordinateApi - 시도 이름 : " + sido.getSidoName());
 

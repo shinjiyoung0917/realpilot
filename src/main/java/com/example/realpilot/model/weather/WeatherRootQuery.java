@@ -6,5 +6,6 @@ import java.util.List;
 
 @Data
 public class WeatherRootQuery {
-    private List<Weathers> hourlyWeatherOfRegion;
+    private List<Weathers> hourlyWeather;
+    private List<Weathers> dailyWeather;
 }

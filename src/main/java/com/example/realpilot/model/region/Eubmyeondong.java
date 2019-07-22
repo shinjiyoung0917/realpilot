@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-public class Eubmyeondong {
+public class Eubmyeondong<T> { // TODO: extends Regions
     private String uid;
 
     private String hCode;
@@ -22,7 +22,21 @@ public class Eubmyeondong {
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
 
+    public Eubmyeondong setRegion(Sido region, RegionData regionData) {
+        setRegionData(regionData);
+        region.getEubmyeondongs().add(this);
+
+        return this;
+    }
+
     public Eubmyeondong setRegion(Sigungu sggObject, RegionData regionData) {
+        setRegionData(regionData);
+        sggObject.getEubmyeondongs().add(this);
+
+        return this;
+    }
+
+    private void setRegionData(RegionData regionData) {
         this.hCode = regionData.getHCode();
         this.umdName = regionData.getUmdName();
         this.createdDate = regionData.getCreatedDate();
@@ -39,10 +53,7 @@ public class Eubmyeondong {
             this.tmX = regionData.getTmX();
             this.tmY = regionData.getTmY();
         }
-
-        sggObject.getEubmyeondongs().add(this);
-
-        return this;
     }
+
 
 }
