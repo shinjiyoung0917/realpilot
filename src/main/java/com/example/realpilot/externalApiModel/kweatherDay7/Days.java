@@ -3,7 +3,7 @@ package com.example.realpilot.externalApiModel.kweatherDay7;
 import lombok.Data;
 
 @Data
-public class Day {
+public class Days {
     private String tm;
     private Integer tfh;
     private String tmyo;

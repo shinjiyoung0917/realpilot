@@ -1,6 +1,7 @@
 package com.example.realpilot.model.region;
 
 import com.example.realpilot.excelModel.RegionData;
+import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
 import lombok.Data;
 
@@ -21,6 +22,7 @@ public class Eubmyeondong<T> { // TODO: extends Regions
     private Double tmY;
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
+    private List<DailyWeather> dailyWeathers = new ArrayList<>();
 
     public Eubmyeondong setRegion(Sido region, RegionData regionData) {
         setRegionData(regionData);

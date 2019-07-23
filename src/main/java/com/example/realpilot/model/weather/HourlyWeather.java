@@ -6,14 +6,16 @@ import java.util.Map;
 
 @Data
 public class HourlyWeather extends Weathers {
-    public void setHourlyWeather(Map<String, Float> categoryValueMap, String baseDate, String baseTime) {
+    public void setHourlyWeather(String uid, Map<String, Float> categoryValueMap, String baseDate, String baseTime) {
+        this.setUid(uid);
         this.setBaseDate(baseDate);
         this.setBaseTime(baseTime);
 
         setCategoryValue(categoryValueMap);
     }
 
-    public void setHourlyWeather(Map<String, Float> categoryValueMap, String baseDate, String baseTime, String fcstDate, String fcstTime) {
+    public void setHourlyWeather(String uid, Map<String, Float> categoryValueMap, String baseDate, String baseTime, String fcstDate, String fcstTime) {
+        this.setUid(uid);
         this.setBaseDate(baseDate);
         this.setBaseTime(baseTime);
         this.setFcstDate(fcstDate);

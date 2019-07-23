@@ -50,6 +50,7 @@ public class DateDao<T> {
                 "baseTime: string @index(fulltext) .\n" +
                 "fcstDate: string @index(fulltext) .\n" +
                 "fcstTime: string @index(fulltext) .\n" +
+                "tm: string @index(fulltext) .\n" +
                 "hourlyWeathers: uid @reverse .\n" +
                 "dailyWeathers: uid @reverse .";
 
@@ -121,7 +122,7 @@ public class DateDao<T> {
         operations.mutate(transaction, date);
     }
 
-    public Hour getDateNode(Map<DateUnit, Integer> dateMap) {
+    public Hour getHourNode(Map<DateUnit, Integer> dateMap) {
         String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
                 " currentDate(func: eq(year, $year)) {\n" +
                 "    year\n" +
@@ -150,6 +151,33 @@ public class DateDao<T> {
 
         // TODO: 연쇄적인 호출을 줄일 방법은 없을까
         return currentDate.get(0).getMonths().get(0).getDays().get(0).getHours().get(0);
+    }
+
+    public Day getDayNode(Map<DateUnit, Integer> dateMap) {
+        String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
+                " currentDate(func: eq(year, $year)) {\n" +
+                "    year\n" +
+                "    months @filter(eq(month, $month)) {\n" +
+                "      month\n" +
+                "      days @filter(eq(day, $day)) {\n" +
+                "        uid\n" +
+                "        day\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var  = new LinkedHashMap<>();
+        var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
+        var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
+        var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        List<Dates> currentDate =  dateRootQuery.getCurrentDate();
+
+        // TODO: 연쇄적인 호출을 줄일 방법은 없을까
+        return currentDate.get(0).getMonths().get(0).getDays().get(0);
     }
 
     public void updateDateNode(T date) {

@@ -1,5 +1,6 @@
 package com.example.realpilot.model.weather;
 
+import com.example.realpilot.model.date.Month;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -34,14 +35,21 @@ public class Weathers {
 
     private Float LGT;
 
-    /*private String tm;
+    private String tm;
     private Integer tfh;
-    private String tmyo;*/
+    private String tmyo;
     private String icon;
     private String wtext;
     private Integer mintemp;
     private Integer maxtemp;
     private Integer rainp;
+
+    private String sidoName;
+    private String sggName;
+    private String umdName;
+
+    private Integer year;
+    private List<Month> months;
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();

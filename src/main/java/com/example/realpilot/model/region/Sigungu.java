@@ -1,6 +1,7 @@
 package com.example.realpilot.model.region;
 
 import com.example.realpilot.excelModel.RegionData;
+import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class Sigungu { // TODO: extends Regions
 
     private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
+    private List<DailyWeather> dailyWeathers = new ArrayList<>();
 
     public Sigungu setRegion(Sido sidoObject, RegionData regionData) {
         this.hCode = regionData.getHCode();

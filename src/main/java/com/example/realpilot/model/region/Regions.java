@@ -1,5 +1,6 @@
 package com.example.realpilot.model.region;
 
+import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
 import lombok.Data;
 
@@ -22,4 +23,5 @@ public class Regions {
 
     private List<Sido> sidos = new ArrayList<>(); // 연속적으로 한번에 삽입할 때 사용
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
+    private List<DailyWeather> dailyWeathers = new ArrayList<>();
 }
