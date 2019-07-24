@@ -17,6 +17,7 @@ import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarning;
 import com.example.realpilot.model.date.Day;
 import com.example.realpilot.model.date.Hour;
 import com.example.realpilot.model.region.Regions;
+import com.example.realpilot.model.region.Sigungu;
 import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
 import com.example.realpilot.model.weather.WeatherRootQuery;
@@ -32,8 +33,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.swing.text.html.Option;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class WeatherService {
@@ -253,11 +256,11 @@ public class WeatherService {
             e.printStackTrace();
         }
 
+
+        Day dayNode = new Day();
+
         for (Area area : kweatherDay7TopModel.getAreas()) {
-            Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
-            dateMap.remove(DateUnit.HOUR);
-            Day dayNode = dateDao.getDayNode(dateMap);
-            Integer currentDay = dateMap.get(DateUnit.DAY);
+            Regions foundRegion = new Regions();
 
             String sidoName = "";
             String sggName = "";
@@ -269,10 +272,12 @@ public class WeatherService {
                 sidoName = area.getAreaname1();
                 umdName = area.getAreaname2();
                 weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD);
+                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_UMD));
             } else {
                 if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
                     sidoName = area.getAreaname2();
                     weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO);
+                    Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO));
                 } else {
                     sidoName = area.getAreaname1();
                     sggName = area.getAreaname2() + " " + area.getAreaname3();
@@ -284,41 +289,56 @@ public class WeatherService {
 
                     if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
                         weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG);
+                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG));
                     } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
                         umdName = area.getAreaname4();
                         weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG_UMD);
+                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG_UMD));
                     }
                 }
             }
 
-            // TODO: tfh가 예보 시간인건가.. 예보시간이라면 hourlyWeather로 넣어야할 듯(?) 
-            for(Days day : area.getDayList()) {
-                List<DailyWeather> dailyWeatherList = weatherRootQuery.getDailyWeather();
+            List<DailyWeather> dailyWeatherList = weatherRootQuery.getDailyWeather();
+
+            if((area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4()).equals("대전동구-가양1동")) {
+                log.info("/////////////////");
+            }
+
+            // TODO: tfh가 예보 시간인건가.. 예보시간이라면 hourlyWeather로 넣어야할 듯(?)
+            if(Optional.ofNullable(foundRegion.getUid()).isPresent()) {
                 DailyWeather newDailyWeather = new DailyWeather();
 
-                if (dailyWeatherList.size() != 0) {
-                    DailyWeather oldDailyWeather = dailyWeatherList.get(0);
-                    newDailyWeather.setDailyWeather(oldDailyWeather.getUid(), day.getTm(), day.getIcon(), day.getWtext(), day.getMintemp(), day.getMaxtemp(), day.getRainp());
-                    weatherDao.updateWeatherNode(oldDailyWeather);
+                if (!dailyWeatherList.isEmpty()) {
+                    for (Days day : area.getDayList()) {
+                        DailyWeather oldDailyWeather = dailyWeatherList.get(0);
+                        newDailyWeather.setDailyWeather(oldDailyWeather.getUid(), day);
+                        weatherDao.updateWeatherNode(oldDailyWeather);
+                    }
                 } else {
-                    newDailyWeather.setDailyWeather(null, day.getTm(), day.getIcon(), day.getWtext(), day.getMintemp(), day.getMaxtemp(), day.getRainp());
+                    for (Days day : area.getDayList()) {
+                        newDailyWeather = new DailyWeather();
+                        newDailyWeather.setDailyWeather(null, day);
 
-                    Regions region = weatherRootQuery.getRegion().get(0);
-                    region.getDailyWeathers().add(newDailyWeather);
-                    regionDao.updateRegionNode(region);
+                        foundRegion.getDailyWeathers().add(newDailyWeather);
+                    }
 
-                    DailyWeather foundDailyWeather = weatherDao.getDailyWeatherNodeByDate(region.getUid(), day.getTm());
+                    regionDao.updateRegionNode(foundRegion);
 
-                    dayNode.getDailyWeathers().add(foundDailyWeather);
+                    for (Days day : area.getDayList()) {
+                        AtomicReference<Optional> foundDailyWeather = new AtomicReference<>();
+                        Optional.ofNullable(foundRegion.getUid()).ifPresent((uid) -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeByDate(uid, day.getTm())));
+
+                        Map<DateUnit, Integer> dateMap = dateService.getTmDate(day.getTm());
+                        dayNode = dateDao.getDayNode(dateMap);
+
+                        dayNode.getDailyWeathers().add(foundDailyWeather.get());
+                        log.info("[Service] callKweatherDay7Api - " + dayNode.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 중");
+                    }
                     dateDao.updateDateNode(dayNode);
-
-                    // 하루씩 증가?
-                    dateMap.put(DateUnit.DAY, ++currentDay);
-                    dayNode = dateDao.getDayNode(dateMap);
+                    log.info("[Service] callKweatherDay7Api - 지역->날씨<-날짜 노드 연결 모두 완료");
                 }
-                log.info("[Service] callKweatherDay7Api - " + dayNode.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료");
             }
-            log.info("[Service] callKweatherDay7Api - 지역 : " + area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4());
+            log.info("[Service] callKweatherDay7Api - 지역 : " + "[" + area.getCode() + "] " + area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4());
         }
     }
 
@@ -326,29 +346,32 @@ public class WeatherService {
         Hour hourNode = dateDao.getHourNode(dateMap);
 
         for(Regions oneRegion : regionByGrid) {
+            Regions foundRegion = new Regions();
+
             WeatherRootQuery weatherRootQuery = weatherDao.getHourlyWeatherNodeByRegionAndDate(oneRegion.getUid());
 
             List<HourlyWeather> hourlyWeatherList = weatherRootQuery.getHourlyWeather();
             HourlyWeather newHourlyWeather = hourlyWeather;
 
-            if(hourlyWeatherList.size() != 0) {
+            if(!hourlyWeatherList.isEmpty()) {
                 HourlyWeather oldHourlyWeather = hourlyWeatherList.get(0);
                 hourlyWeather.setUid(oldHourlyWeather.getUid());
                 weatherDao.updateWeatherNode(oldHourlyWeather);
             } else {
+                //Regions foundRegion = weatherRootQuery.getRegion().get(0);
+                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setUid(region.get(0).getUid()));
 
-                Regions region = weatherRootQuery.getRegion().get(0);
-                region.getHourlyWeathers().add(newHourlyWeather);
-                regionDao.updateRegionNode(region);
+                foundRegion.getHourlyWeathers().add(newHourlyWeather);
+                regionDao.updateRegionNode(foundRegion);
 
                 HourlyWeather foundHourlyWeather = new HourlyWeather();
 
                 if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
                 } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
                 } else if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(region.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
                 }
 
                 hourNode.getHourlyWeathers().add(foundHourlyWeather);

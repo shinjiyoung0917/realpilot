@@ -76,7 +76,7 @@ public class DateDao<T> {
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
 
         List<DateRootQuery.DataByFunc> monthsCount = dateRootQuery.getMonthsCount();
-        if(monthsCount.size() != 0) {
+        if(!monthsCount.isEmpty()) {
             return monthsCount.get(0).getCountOfMonths();
         } else {
             log.info("[Dao] getDateNodeCountDao - DB에 날짜 노드 없음");
@@ -149,12 +149,12 @@ public class DateDao<T> {
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> currentDate =  dateRootQuery.getCurrentDate();
 
-        // TODO: 연쇄적인 호출을 줄일 방법은 없을까
+        // TODO: null 체크, Optional로 반환
         return currentDate.get(0).getMonths().get(0).getDays().get(0).getHours().get(0);
     }
 
     public Day getDayNode(Map<DateUnit, Integer> dateMap) {
-        String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
+        String query = "query currentDate($year: int, $month: int, $day: int) {\n" +
                 " currentDate(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
@@ -176,7 +176,7 @@ public class DateDao<T> {
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> currentDate =  dateRootQuery.getCurrentDate();
 
-        // TODO: 연쇄적인 호출을 줄일 방법은 없을까
+        // TODO: null 체크, Optional로 반환
         return currentDate.get(0).getMonths().get(0).getDays().get(0);
     }
 

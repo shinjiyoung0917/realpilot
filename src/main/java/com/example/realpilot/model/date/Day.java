@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Data
 public class Day {
@@ -14,7 +15,7 @@ public class Day {
 
     private List<Hour> hours = new ArrayList<>();
 
-    private List<DailyWeather> dailyWeathers = new ArrayList<>();
+    private List<Optional<DailyWeather>> dailyWeathers = new ArrayList<>();
 
     public void setDate(int d, List<Hour> hourList) {
         this.day = d;

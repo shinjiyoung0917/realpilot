@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 public class WeatherDao<T> {
@@ -46,6 +47,7 @@ public class WeatherDao<T> {
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<HourlyWeather> hourlyWeather =  weatherRootQuery.getHourlyWeather();
 
+        // TODO: null 체크, Optional로 반환
         return hourlyWeather.get(0).getHourlyWeathers().get(0);
     }
 
@@ -131,16 +133,24 @@ public class WeatherDao<T> {
         return query;
     }
 
-    public DailyWeather getDailyWeatherNodeByDate(String uid, String date) {
-        DgraphProto.Response res = null;
+    public Optional getDailyWeatherNodeByDate(String uid, String date) {
+        DgraphProto.Response res;
 
         res = queryForKweatherDay7(uid, date);
 
         // TODO: DB에서 가져온 res 객체 null일 경우 처리
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
-        List<DailyWeather> dailyWeather =  weatherRootQuery.getDailyWeather();
+        List<DailyWeather> dailyWeatherResult =  weatherRootQuery.getDailyWeather();
 
-        return dailyWeather.get(0).getDailyWeathers().get(0);
+       Optional<DailyWeather> result = Optional.empty();
+        if(!dailyWeatherResult.isEmpty()) {
+            List<DailyWeather> dailyWeatherList = dailyWeatherResult.get(0).getDailyWeathers();
+            if(!dailyWeatherList.isEmpty()) {
+                result = Optional.of(dailyWeatherList.get(0));
+            }
+        }
+
+        return result;
     }
 
     private DgraphProto.Response queryForKweatherDay7(String uid, String date) {

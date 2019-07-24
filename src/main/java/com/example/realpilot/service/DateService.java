@@ -121,4 +121,14 @@ public class DateService {
 
         return dateMap;
     }
+
+    public Map<DateUnit, Integer> getTmDate(String tm) {
+        Map<DateUnit, Integer> dateMap = new HashMap<>();
+
+        dateMap.put(DateUnit.YEAR, Integer.parseInt(tm.substring(0, 4)));
+        dateMap.put(DateUnit.MONTH, Integer.parseInt(tm.substring(5, 7)));
+        dateMap.put(DateUnit.DAY, Integer.parseInt(tm.substring(8, 10)));
+
+        return dateMap;
+    }
 }

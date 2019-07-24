@@ -16,8 +16,8 @@ public class Dates {
     private Integer day;
     private Integer hour;
 
-    private List<Month> months;
     private List<Year> years = new ArrayList<>();
+    private List<Month> months;
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
 }

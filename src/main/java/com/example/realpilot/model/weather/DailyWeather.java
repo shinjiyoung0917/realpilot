@@ -1,16 +1,17 @@
 package com.example.realpilot.model.weather;
 
+import com.example.realpilot.externalApiModel.kweatherDay7.Days;
 import lombok.Data;
 
 @Data
 public class DailyWeather extends Weathers {
-    public void setDailyWeather(String uid, String tm, String icon, String wtext, Integer mintemp, Integer maxtemp, Integer rainp) {
+    public void setDailyWeather(String uid, Days day) {
         this.setUid(uid);
-        this.setTm(tm);
-        this.setIcon(icon);
-        this.setWtext(wtext);
-        this.setMintemp(mintemp);
-        this.setMaxtemp(maxtemp);
-        this.setRainp(rainp);
+        this.setTm(day.getTm());
+        this.setIcon(day.getIcon());
+        this.setWtext(day.getWtext());
+        this.setMintemp(day.getMintemp());
+        this.setMaxtemp(day.getMaxtemp());
+        this.setRainp(day.getRainp());
     }
 }
