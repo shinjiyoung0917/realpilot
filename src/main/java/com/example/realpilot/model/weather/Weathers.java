@@ -15,6 +15,7 @@ public class Weathers {
     private String fcstDate;
     private String fcstTime;
 
+    // TODO: 이름 변경
     private Float POP;
     private Float PTY;
     private Float R06;

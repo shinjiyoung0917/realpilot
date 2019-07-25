@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class DateRootQuery {
     private List<DataByFunc> monthsCount;
-    private List<Dates> currentDate;
+    private List<Dates> date;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)

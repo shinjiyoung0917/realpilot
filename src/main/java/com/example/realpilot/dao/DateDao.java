@@ -74,14 +74,16 @@ public class DateDao<T> {
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
 
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        List<DateRootQuery.DataByFunc> monthsCountResult = dateRootQuery.getMonthsCount();
 
-        List<DateRootQuery.DataByFunc> monthsCount = dateRootQuery.getMonthsCount();
-        if(!monthsCount.isEmpty()) {
-            return monthsCount.get(0).getCountOfMonths();
-        } else {
-            log.info("[Dao] getDateNodeCountDao - DB에 날짜 노드 없음");
-            return 0;
+        if(!monthsCountResult.isEmpty() || !Optional.ofNullable(monthsCountResult).isPresent()) {
+            if(Optional.ofNullable(monthsCountResult.get(0).getCountOfMonths()).isPresent()) {
+                return monthsCountResult.get(0).getCountOfMonths();
+            }
         }
+
+        log.info("[Dao] getDateNodeCountDao - DB에 날짜 노드 없음");
+        return 0;
     }
 
     public void createDateNode(Transaction transaction) {
@@ -122,9 +124,9 @@ public class DateDao<T> {
         operations.mutate(transaction, date);
     }
 
-    public Hour getHourNode(Map<DateUnit, Integer> dateMap) {
-        String query = "query currentDate($year: int, $month: int, $day: int, $hour: int) {\n" +
-                " currentDate(func: eq(year, $year)) {\n" +
+    public Optional<Hour> getHourNode(Map<DateUnit, Integer> dateMap) {
+        String query = "query date($year: int, $month: int, $day: int, $hour: int) {\n" +
+                " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
                 "      month\n" +
@@ -147,15 +149,28 @@ public class DateDao<T> {
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
-        List<Dates> currentDate =  dateRootQuery.getCurrentDate();
+        List<Dates> dateResult =  dateRootQuery.getDate();
 
-        // TODO: null 체크, Optional로 반환
-        return currentDate.get(0).getMonths().get(0).getDays().get(0).getHours().get(0);
+        Optional<Hour> result = Optional.empty();
+        if(!dateResult.isEmpty() || !Optional.ofNullable(dateResult).isPresent()) {
+            List<Month> monthList = dateResult.get(0).getMonths();
+            if(!monthList.isEmpty()) {
+                List<Day> dayList = monthList.get(0).getDays();
+                if(!dayList.isEmpty()) {
+                    List<Hour> hourList = dayList.get(0).getHours();
+                    if(!hourList.isEmpty()) {
+                        result = Optional.of(hourList.get(0));
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
-    public Day getDayNode(Map<DateUnit, Integer> dateMap) {
-        String query = "query currentDate($year: int, $month: int, $day: int) {\n" +
-                " currentDate(func: eq(year, $year)) {\n" +
+    public Optional<Day> getDayNode(Map<DateUnit, Integer> dateMap) {
+        String query = "query date($year: int, $month: int, $day: int) {\n" +
+                " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
                 "      month\n" +
@@ -174,10 +189,20 @@ public class DateDao<T> {
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
-        List<Dates> currentDate =  dateRootQuery.getCurrentDate();
+        List<Dates> dateResult =  dateRootQuery.getDate();
 
-        // TODO: null 체크, Optional로 반환
-        return currentDate.get(0).getMonths().get(0).getDays().get(0);
+        Optional<Day> result = Optional.empty();
+        if(!dateResult.isEmpty() || !Optional.ofNullable(dateResult).isPresent()) {
+            List<Month> monthList = dateResult.get(0).getMonths();
+            if(!monthList.isEmpty()) {
+                List<Day> dayList = monthList.get(0).getDays();
+                if(!dayList.isEmpty()) {
+                    result = Optional.of(dayList.get(0));
+                }
+            }
+        }
+
+        return result;
     }
 
     public void updateDateNode(T date) {

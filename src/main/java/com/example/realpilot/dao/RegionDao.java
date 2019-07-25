@@ -53,7 +53,7 @@ public class RegionDao {
         operations.mutate(transaction, region);
     }
 
-    public List<Regions> getRegionNodeByGrid(Integer gridX, Integer gridY) {
+    public List<Regions> getRegionNodeWithGrid(Integer gridX, Integer gridY) {
         String query = "query regionByGrid($gridX: int, $gridY: int) {\n" +
                 " regionByGrid(func: eq(gridX, $gridX)) @filter(eq(gridY, $gridY)) {\n" +
                 "    uid\n" +
@@ -76,7 +76,7 @@ public class RegionDao {
         return regionByGrid;
     }
 
-    public List<Regions> getRegionNodeByUid(String uid) {
+    public List<Regions> getRegionNodeWithUid(String uid) {
         String query = "query {\n" +
                 " regionByUid(func:uid($uid)) {\n" +
                 "    expand(_all_)\n" +

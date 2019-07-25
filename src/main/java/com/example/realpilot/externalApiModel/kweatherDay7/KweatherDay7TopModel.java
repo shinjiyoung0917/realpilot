@@ -8,16 +8,16 @@ import java.util.List;
 
 @XmlRootElement(name = "weather")
 public class KweatherDay7TopModel {
-    private Area area;
+    private AreaOfDay7 area;
     @Getter
-    private List<Area> areas =  new ArrayList<>();
+    private List<AreaOfDay7> areas =  new ArrayList<>();
 
-    public void setArea (Area area) {
+    public void setArea (AreaOfDay7 area) {
         this.area = area;
         areas.add(area);
-        this.area = new Area();
+        this.area = new AreaOfDay7();
     }
-    public Area getArea() {
+    public AreaOfDay7 getArea() {
         return area;
     }
 

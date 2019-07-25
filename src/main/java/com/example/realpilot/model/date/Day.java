@@ -15,7 +15,7 @@ public class Day {
 
     private List<Hour> hours = new ArrayList<>();
 
-    private List<Optional<DailyWeather>> dailyWeathers = new ArrayList<>();
+    private List<DailyWeather> dailyWeathers = new ArrayList<>();
 
     public void setDate(int d, List<Hour> hourList) {
         this.day = d;

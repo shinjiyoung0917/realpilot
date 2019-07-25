@@ -9,23 +9,20 @@ import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpace;
 import com.example.realpilot.externalApiModel.forecastSpace.ForecastSpaceTopModel;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTime;
 import com.example.realpilot.externalApiModel.forecastTime.ForecastTimeTopModel;
-import com.example.realpilot.externalApiModel.kweatherDay7.Area;
-import com.example.realpilot.externalApiModel.kweatherDay7.Days;
+import com.example.realpilot.externalApiModel.kweatherAmPm7.AreaOfAmPm7;
+import com.example.realpilot.externalApiModel.kweatherAmPm7.KweatherAmPm7TopModel;
+import com.example.realpilot.externalApiModel.kweatherDay7.AreaOfDay7;
+import com.example.realpilot.externalApiModel.kweatherDay7.DayOfDay7;
 import com.example.realpilot.externalApiModel.kweatherDay7.KweatherDay7TopModel;
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarningTopModel;
 import com.example.realpilot.externalApiModel.weatherWarning.WeatherWarning;
 import com.example.realpilot.model.date.Day;
 import com.example.realpilot.model.date.Hour;
 import com.example.realpilot.model.region.Regions;
-import com.example.realpilot.model.region.Sigungu;
 import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
 import com.example.realpilot.model.weather.WeatherRootQuery;
-import com.example.realpilot.model.weather.Weathers;
-import com.example.realpilot.utilAndConfig.DateUnit;
-import com.example.realpilot.utilAndConfig.ExternalWeatherApi;
-import com.example.realpilot.utilAndConfig.RegionUnit;
-import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
+import com.example.realpilot.utilAndConfig.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +30,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.swing.text.html.Option;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +64,8 @@ public class WeatherService {
     private String serviceKey;
     @Value("${kweatherDay7.api.url}")
     private String kweatherDay7ApiUrl;
+    @Value("${kweatherAmPm7.api.url}")
+    private String kweatherAmPm7ApiUrl;
 
     private Integer GRID_X_IDNEX = 0;
     private Integer GRID_Y_INDEX = 1;
@@ -84,7 +82,7 @@ public class WeatherService {
            Integer gridX = grid.get(GRID_X_IDNEX);
            Integer gridY = grid.get(GRID_Y_INDEX);
 
-           List<Regions> regionByGrid = regionDao.getRegionNodeByGrid(gridX, gridY);
+           List<Regions> regionByGrid = regionDao.getRegionNodeWithGrid(gridX, gridY);
 
            String baseDate = dateService.makeBaseDateFormat();
            String baseTime = dateService.makeBaseTimeFormat(ExternalWeatherApi.FORECAST_GRIB);
@@ -105,14 +103,6 @@ public class WeatherService {
            baseTime = "0800";
            //callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionByGrid);
        }
-    }
-
-    public void callWeatherApiOfKweather() {
-        KweatherDay7TopModel kweatherDay7TopModel = new KweatherDay7TopModel();
-
-        URI kweatherDay7Uri = URI.create(kweatherDay7ApiUrl);
-
-        callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri);
     }
 
     private void callForecastGribApi(ForecastGribTopModel forecastGribTopModel,URI forecastGribUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
@@ -249,106 +239,13 @@ public class WeatherService {
         }
     }
 
-    private void callKweatherDay7Api(KweatherDay7TopModel kweatherDay7TopModel, URI kweatherDay7Uri) {
-        try {
-            kweatherDay7TopModel = restTemplate.getForObject(kweatherDay7Uri, KweatherDay7TopModel.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        Day dayNode = new Day();
-
-        for (Area area : kweatherDay7TopModel.getAreas()) {
-            Regions foundRegion = new Regions();
-
-            String sidoName = "";
-            String sggName = "";
-            String umdName = "";
-
-            WeatherRootQuery weatherRootQuery = null;
-
-            if(area.getAreaname1().equals("세종특별자치시")) {
-                sidoName = area.getAreaname1();
-                umdName = area.getAreaname2();
-                weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD);
-                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_UMD));
-            } else {
-                if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
-                    sidoName = area.getAreaname2();
-                    weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO);
-                    Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO));
-                } else {
-                    sidoName = area.getAreaname1();
-                    sggName = area.getAreaname2() + " " + area.getAreaname3();
-                    sggName = sggName.replaceAll("-|NA", "");
-
-                    if(area.getAreaname3().equals("-") || area.getAreaname3().equals("NA")) {
-                        sggName = sggName.replaceAll(" ", "");
-                    }
-
-                    if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
-                        weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG);
-                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG));
-                    } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
-                        umdName = area.getAreaname4();
-                        weatherRootQuery = weatherDao.getDailyWeatherNodeByRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG_UMD);
-                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG_UMD));
-                    }
-                }
-            }
-
-            List<DailyWeather> dailyWeatherList = weatherRootQuery.getDailyWeather();
-
-            if((area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4()).equals("대전동구-가양1동")) {
-                log.info("/////////////////");
-            }
-
-            // TODO: tfh가 예보 시간인건가.. 예보시간이라면 hourlyWeather로 넣어야할 듯(?)
-            if(Optional.ofNullable(foundRegion.getUid()).isPresent()) {
-                DailyWeather newDailyWeather = new DailyWeather();
-
-                if (!dailyWeatherList.isEmpty()) {
-                    for (Days day : area.getDayList()) {
-                        DailyWeather oldDailyWeather = dailyWeatherList.get(0);
-                        newDailyWeather.setDailyWeather(oldDailyWeather.getUid(), day);
-                        weatherDao.updateWeatherNode(oldDailyWeather);
-                    }
-                } else {
-                    for (Days day : area.getDayList()) {
-                        newDailyWeather = new DailyWeather();
-                        newDailyWeather.setDailyWeather(null, day);
-
-                        foundRegion.getDailyWeathers().add(newDailyWeather);
-                    }
-
-                    regionDao.updateRegionNode(foundRegion);
-
-                    for (Days day : area.getDayList()) {
-                        AtomicReference<Optional> foundDailyWeather = new AtomicReference<>();
-                        Optional.ofNullable(foundRegion.getUid()).ifPresent((uid) -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeByDate(uid, day.getTm())));
-
-                        Map<DateUnit, Integer> dateMap = dateService.getTmDate(day.getTm());
-                        dayNode = dateDao.getDayNode(dateMap);
-
-                        dayNode.getDailyWeathers().add(foundDailyWeather.get());
-                        log.info("[Service] callKweatherDay7Api - " + dayNode.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 중");
-                    }
-                    dateDao.updateDateNode(dayNode);
-                    log.info("[Service] callKweatherDay7Api - 지역->날씨<-날짜 노드 연결 모두 완료");
-                }
-            }
-            log.info("[Service] callKweatherDay7Api - 지역 : " + "[" + area.getCode() + "] " + area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4());
-        }
-    }
-
     private void connectRegionAndWeatherAndDateNode(Map<DateUnit, Integer> dateMap, String date, String time, List<Regions> regionByGrid, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
-        Hour hourNode = dateDao.getHourNode(dateMap);
+        Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
         for(Regions oneRegion : regionByGrid) {
             Regions foundRegion = new Regions();
 
-            WeatherRootQuery weatherRootQuery = weatherDao.getHourlyWeatherNodeByRegionAndDate(oneRegion.getUid());
+            WeatherRootQuery weatherRootQuery = weatherDao.getHourlyWeatherNodeWithRegionAndDate(oneRegion.getUid());
 
             List<HourlyWeather> hourlyWeatherList = weatherRootQuery.getHourlyWeather();
             HourlyWeather newHourlyWeather = hourlyWeather;
@@ -358,28 +255,30 @@ public class WeatherService {
                 hourlyWeather.setUid(oldHourlyWeather.getUid());
                 weatherDao.updateWeatherNode(oldHourlyWeather);
             } else {
-                //Regions foundRegion = weatherRootQuery.getRegion().get(0);
                 Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setUid(region.get(0).getUid()));
 
                 foundRegion.getHourlyWeathers().add(newHourlyWeather);
                 regionDao.updateRegionNode(foundRegion);
 
-                HourlyWeather foundHourlyWeather = new HourlyWeather();
+                Optional<HourlyWeather> foundHourlyWeather = Optional.empty();
 
                 if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
                 } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
                 } else if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeByDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
+                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
                 }
 
-                hourNode.getHourlyWeathers().add(foundHourlyWeather);
+                if(Optional.ofNullable(hourNode).isPresent()) {
+                    Optional<HourlyWeather> finalFoundHourlyWeather = foundHourlyWeather;
+                    hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(finalFoundHourlyWeather.get()));
+                }
             }
         }
         dateDao.updateDateNode(hourNode);
 
-        log.info("[Service] connectRegionAndWeatherAndDateNode - " + hourNode.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료");
+        hourNode.ifPresent(hour -> log.info("[Service] connectRegionAndWeatherAndDateNode - " + hour.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료"));
     }
 
     private int getFcstTimeCount(String baseTime) {
@@ -395,6 +294,155 @@ public class WeatherService {
         }
 
         return count;
+    }
+
+    public void callWeatherApiOfKweather() {
+        KweatherDay7TopModel kweatherDay7TopModel = new KweatherDay7TopModel();
+        KweatherAmPm7TopModel kweatherAmPm7TopModel = new KweatherAmPm7TopModel();
+
+        URI kweatherDay7Uri = URI.create(kweatherDay7ApiUrl);
+        URI kweatherAmPm7Uri = URI.create(kweatherAmPm7ApiUrl);
+
+        //callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri);
+        callKweatherAmPm7Api(kweatherAmPm7TopModel, kweatherAmPm7Uri);
+    }
+
+    private void callKweatherDay7Api(KweatherDay7TopModel kweatherDay7TopModel, URI kweatherDay7Uri) {
+        try {
+            kweatherDay7TopModel = restTemplate.getForObject(kweatherDay7Uri, KweatherDay7TopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Optional<Day> dayNode;
+
+        for (AreaOfDay7 area : kweatherDay7TopModel.getAreas()) {
+            Regions foundRegion = new Regions();
+
+            String sidoName = "";
+            String sggName = "";
+            String umdName = "";
+
+            WeatherRootQuery weatherRootQuery = null;
+
+            if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
+                sidoName = area.getAreaname1();
+                umdName = area.getAreaname2();
+                weatherRootQuery = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD, Query.DAILY_WEATHER);
+                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_UMD));
+            } else {
+                if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
+                    sidoName = area.getAreaname2();
+                    weatherRootQuery = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO, Query.DAILY_WEATHER);
+                    Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO));
+                } else {
+                    sidoName = area.getAreaname1();
+                    sggName = area.getAreaname2() + " " + area.getAreaname3();
+                    sggName = sggName.replaceAll("-|NA", "");
+
+                    if(area.getAreaname3().equals("-") || area.getAreaname3().equals("NA")) {
+                        sggName = sggName.replaceAll(" ", "");
+                    }
+
+                    if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
+                        weatherRootQuery = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG, Query.DAILY_WEATHER);
+                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG));
+                    } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
+                        umdName = area.getAreaname4();
+                        weatherRootQuery = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG_UMD, Query.DAILY_WEATHER);
+                        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG_UMD));
+                    }
+                }
+            }
+
+            List<DailyWeather> dailyWeatherList = weatherRootQuery.getDailyWeather();
+
+            if(Optional.ofNullable(foundRegion.getUid()).isPresent()) {
+                DailyWeather newDailyWeather = new DailyWeather();
+
+                if (!dailyWeatherList.isEmpty()) {
+                    for (DayOfDay7 day : area.getDayList()) {
+                        DailyWeather oldDailyWeather = dailyWeatherList.get(0);
+                        newDailyWeather.setDailyWeather(oldDailyWeather.getUid(), day);
+                        weatherDao.updateWeatherNode(oldDailyWeather);
+                    }
+                } else {
+                    for (DayOfDay7 oneDay : area.getDayList()) {
+                        newDailyWeather = new DailyWeather();
+                        newDailyWeather.setDailyWeather(null, oneDay);
+
+                        foundRegion.getDailyWeathers().add(newDailyWeather);
+                    }
+
+                    regionDao.updateRegionNode(foundRegion);
+
+                    for (DayOfDay7 oneDay : area.getDayList()) {
+                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>();
+                        Optional.ofNullable(foundRegion.getUid()).ifPresent((uid) -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeWithRegionUidAndDate(uid, oneDay.getTm())));
+
+                        Map<DateUnit, Integer> dateMap = dateService.getTmDate(oneDay.getTm());
+                        dayNode = dateDao.getDayNode(dateMap);
+
+                        dayNode.ifPresent(day -> day.getDailyWeathers().add(foundDailyWeather.get().get()));
+                        dateDao.updateDateNode(dayNode);
+                        dayNode.ifPresent(day -> log.info("[Service] callKweatherDay7Api - " + day.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료"));
+                    }
+                }
+            }
+            log.info("[Service] callKweatherDay7Api - 지역 : " + "[" + area.getCode() + "] " + area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4());
+        }
+    }
+
+    private void callKweatherAmPm7Api(KweatherAmPm7TopModel kweatherAmPm7TopModel, URI kweatherAmPm7Uri) {
+        try {
+            kweatherAmPm7TopModel = restTemplate.getForObject(kweatherAmPm7Uri, KweatherAmPm7TopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Optional<Day> dayNode;
+
+        for (AreaOfAmPm7 area : kweatherAmPm7TopModel.getAreas()) {
+            Regions foundRegion = new Regions();
+
+            String sidoName = "";
+            String sggName = "";
+            String umdName = "";
+
+            // TODO: PM Weather 노드 조회하는 로직도 추가
+            WeatherRootQuery weatherRootQuery1 = null;
+
+            if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
+                sidoName = area.getAreaname1();
+                umdName = area.getAreaname2();
+                weatherRootQuery1 = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD, Query.AM_WEATHER);
+                Optional.ofNullable(weatherRootQuery1.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_UMD));
+            } else {
+                if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
+                    sidoName = area.getAreaname2();
+                    weatherRootQuery1 = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO, Query.AM_WEATHER);
+                    Optional.ofNullable(weatherRootQuery1.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO));
+                } else {
+                    sidoName = area.getAreaname1();
+                    sggName = area.getAreaname2() + " " + area.getAreaname3();
+                    sggName = sggName.replaceAll("-|NA", "");
+
+                    if(area.getAreaname3().equals("-") || area.getAreaname3().equals("NA")) {
+                        sggName = sggName.replaceAll(" ", "");
+                    }
+
+                    if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
+                        weatherRootQuery1 = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG, Query.AM_WEATHER);
+                        Optional.ofNullable(weatherRootQuery1.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG));
+                    } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
+                        umdName = area.getAreaname4();
+                        weatherRootQuery1 = weatherDao.getWeatherNodeWithRegionAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_SGG_UMD, Query.AM_WEATHER);
+                        Optional.ofNullable(weatherRootQuery1.getRegion()).ifPresent((region) -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_SGG_UMD));
+                    }
+                }
+            }
+        }
+
     }
 
     public void callWeatherWarningApi() {

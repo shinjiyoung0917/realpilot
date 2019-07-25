@@ -34,67 +34,10 @@ public class WeatherDao<T> {
     @Autowired
     private Gson gson = new Gson();
 
-    public HourlyWeather getHourlyWeatherNodeByDate(String uid, String date, String time, ExternalWeatherApi api) {
-        DgraphProto.Response res = null;
-
-        if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-            res = queryForForecastGrib(uid, date, time);
-        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME) || api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
-            res = queryForForecastTimeOrSpace(uid, date, time);
-        }
-
-        // TODO: DB에서 가져온 res 객체 null일 경우 처리
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
-        List<HourlyWeather> hourlyWeather =  weatherRootQuery.getHourlyWeather();
-
-        // TODO: null 체크, Optional로 반환
-        return hourlyWeather.get(0).getHourlyWeathers().get(0);
-    }
-
-    private DgraphProto.Response queryForForecastGrib(String uid, String baseDate, String baseTime) {
-        String query = "query hourlyWeather($id: string, $baseDate: string, $baseTime: string) {\n" +
-                " hourlyWeather(func: uid($id)) {\n" +
-                "    hourlyWeathers @filter(eq(baseDate, $baseDate) and eq(baseTime, $baseTime)) {\n" +
-                "      uid\n" +
-                "      expand(_all_)\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
-
-        Map<String, String> var = new LinkedHashMap<>();
-        var.put("$id", uid);
-        var.put("$baseDate", baseDate);
-        var.put("$baseTime", baseTime);
-
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
-
-        return res;
-    }
-
-    private DgraphProto.Response queryForForecastTimeOrSpace(String uid, String fcstDate, String fcstTime) {
-        String query = "query hourlyWeather($id: string, $fcstDate: string, $fcstTime: string) {\n" +
-                " hourlyWeather(func: uid($id)) {\n" +
-                "    hourlyWeathers @filter(eq(fcstDate, $fcstDate) and eq(fcstTime, $fcstTime)) {\n" +
-                "      uid\n" +
-                "      expand(_all_)\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
-
-        Map<String, String> var = new LinkedHashMap<>();
-        var.put("$id", uid);
-        var.put("$fcstDate", fcstDate);
-        var.put("$fcstTime", fcstTime);
-
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
-
-        return res;
-    }
-
-    public WeatherRootQuery getHourlyWeatherNodeByRegionAndDate(String uid) {
+    public WeatherRootQuery getHourlyWeatherNodeWithRegionAndDate(String uid) {
         Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
-        String query = queryByRegionUidAndDate(queryByHour(), WeatherEdge.HOURLY_WEATHER.getWeatherEdge(), RootQuery.HOURLY_WEATHER_ROOT_QUERY.getRootQuery());
+        String queryString = queryWithRegionUidAndDate(queryWithHour(), Query.HOURLY_WEATHER.getRootQuery(), Query.HOURLY_WEATHER.getEdge());
         Map<String, String> var = new LinkedHashMap<>();
 
         var.put("$id", uid);
@@ -104,14 +47,14 @@ public class WeatherDao<T> {
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
 
         return weatherRootQuery;
     }
 
-    private String queryByRegionUidAndDate(String dateQuery, String weatherEdge, String weatherRootQuery) {
-        String query = "query region($id: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
+    private String queryWithRegionUidAndDate(String dateQuery, String weatherRootQuery, String weatherEdge) {
+        String queryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
                 " region(func: uid($id)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
@@ -130,33 +73,40 @@ public class WeatherDao<T> {
                 "  }\n" +
                 "}";
 
-        return query;
+        return queryString;
     }
 
-    public Optional getDailyWeatherNodeByDate(String uid, String date) {
-        DgraphProto.Response res;
+    public Optional<HourlyWeather> getHourlyWeatherNodeWithRegionUidAndDate(String uid, String date, String time, ExternalWeatherApi api) {
+        DgraphProto.Response res = null;
 
-        res = queryForKweatherDay7(uid, date);
+        switch (api) {
+            case FORECAST_GRIB:
+                res = queryForForecastGrib(uid, date, time);
+                break;
+            case FORECAST_TIME:
+            case FORECAST_SPACE:
+                res = queryForForecastTimeOrSpace(uid, date, time);
+                break;
+        }
 
-        // TODO: DB에서 가져온 res 객체 null일 경우 처리
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
-        List<DailyWeather> dailyWeatherResult =  weatherRootQuery.getDailyWeather();
+        List<HourlyWeather> hourlyWeatherResult =  weatherRootQuery.getHourlyWeather();
 
-       Optional<DailyWeather> result = Optional.empty();
-        if(!dailyWeatherResult.isEmpty()) {
-            List<DailyWeather> dailyWeatherList = dailyWeatherResult.get(0).getDailyWeathers();
-            if(!dailyWeatherList.isEmpty()) {
-                result = Optional.of(dailyWeatherList.get(0));
+        Optional<HourlyWeather> result = Optional.empty();
+        if(!hourlyWeatherResult.isEmpty() || !Optional.ofNullable(hourlyWeatherResult).isPresent()) {
+            List<HourlyWeather> hourlyWeatherList = hourlyWeatherResult.get(0).getHourlyWeathers();
+            if(!hourlyWeatherList.isEmpty()) {
+                result = Optional.of(hourlyWeatherList.get(0));
             }
         }
 
         return result;
     }
 
-    private DgraphProto.Response queryForKweatherDay7(String uid, String date) {
-        String query = "query dailyWeather($id: string, $date: string) {\n" +
-                "  dailyWeather(func: uid($id)) {\n" +
-                "    dailyWeathers @filter(eq(tm, $date)) {\n" +
+    private DgraphProto.Response queryForForecastGrib(String uid, String baseDate, String baseTime) {
+        String queryString = "query hourlyWeather($id: string, $baseDate: string, $baseTime: string) {\n" +
+                " hourlyWeather(func: uid($id)) {\n" +
+                "    hourlyWeathers @filter(eq(baseDate, $baseDate) and eq(baseTime, $baseTime)) {\n" +
                 "      uid\n" +
                 "      expand(_all_)\n" +
                 "    }\n" +
@@ -165,44 +115,64 @@ public class WeatherDao<T> {
 
         Map<String, String> var = new LinkedHashMap<>();
         var.put("$id", uid);
-        var.put("$date", date);
+        var.put("$baseDate", baseDate);
+        var.put("$baseTime", baseTime);
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
 
         return res;
     }
 
-    public WeatherRootQuery getDailyWeatherNodeByRegionAndDate(String sidoName, String sggName, String umdName, RegionUnit regionUnit) {
+    private DgraphProto.Response queryForForecastTimeOrSpace(String uid, String fcstDate, String fcstTime) {
+        String queryString = "query hourlyWeather($id: string, $fcstDate: string, $fcstTime: string) {\n" +
+                " hourlyWeather(func: uid($id)) {\n" +
+                "    hourlyWeathers @filter(eq(fcstDate, $fcstDate) and eq(fcstTime, $fcstTime)) {\n" +
+                "      uid\n" +
+                "      expand(_all_)\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$id", uid);
+        var.put("$fcstDate", fcstDate);
+        var.put("$fcstTime", fcstTime);
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+
+        return res;
+    }
+
+    public WeatherRootQuery getWeatherNodeWithRegionAndDate(String sidoName, String sggName, String umdName, RegionUnit regionUnit, Query query) {
         Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
-        String query = "";
+        String queryString = "";
         Map<String, String> var = new LinkedHashMap<>();
+
+        String rootQuery = query.getRootQuery();
+        String edge = query.getEdge();
 
         switch (regionUnit) {
             case SIDO:
-                query = queryBySidoNameAndDate(queryByDay(), WeatherEdge.DAILY_WEATHER.getWeatherEdge(), RootQuery.DAILY_WEATHER_ROOT_QUERY.getRootQuery());
+                queryString = queryWithSidoNameAndDate(queryWithDay(), rootQuery, edge);
                 sidoName = "/.*" + sidoName + ".*/i";
                 var.put("$sidoName", sidoName);
                 break;
             case SIDO_SGG:
-                query = queryBySidoAndSggNameAndDate(queryByDay(), WeatherEdge.DAILY_WEATHER.getWeatherEdge(), RootQuery.DAILY_WEATHER_ROOT_QUERY.getRootQuery());
+                queryString = queryWithSidoAndSggNameAndDate(queryWithDay(), rootQuery, edge);
                 sidoName = "/.*" + sidoName + ".*/i";
-                //sggName = "/.*" + sggName + ".*/i";
                 var.put("$sidoName", sidoName);
                 var.put("$sggName", sggName);
                 break;
             case SIDO_UMD:
-                query = queryBySidoAndUmdNameAndDate(queryByDay(), WeatherEdge.DAILY_WEATHER.getWeatherEdge(), RootQuery.DAILY_WEATHER_ROOT_QUERY.getRootQuery());
+                queryString = queryWithSidoAndUmdNameAndDate(queryWithDay(), rootQuery, edge);
                 sidoName = "/.*" + sidoName + ".*/i";
-                //umdName = "/.*" + umdName + ".*/i";
                 var.put("$sidoName", sidoName);
                 var.put("$umdName", umdName);
                 break;
             case SIDO_SGG_UMD:
-                query = queryBySidoAndSggAndUmdNameAndDate(queryByDay(), WeatherEdge.DAILY_WEATHER.getWeatherEdge(), RootQuery.DAILY_WEATHER_ROOT_QUERY.getRootQuery());
+                queryString = queryWithSidoAndSggAndUmdNameAndDate(queryWithDay(), rootQuery, edge);
                 sidoName = "/.*" + sidoName + ".*/i";
-                //sggName = "/.*" + sggName + ".*/i";
-                //umdName = "/.*" + umdName + ".*/i";
                 var.put("$sidoName", sidoName);
                 var.put("$sggName", sggName);
                 var.put("$umdName", umdName);
@@ -214,14 +184,14 @@ public class WeatherDao<T> {
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
 
         return weatherRootQuery;
     }
 
-    private String queryBySidoNameAndDate(String dateQuery, String weatherEdge, String weatherRootQuery) {
-        String query = "query region($sidoName: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
+    private String queryWithSidoNameAndDate(String dateQuery, String weatherRootQuery, String weatherEdge) {
+        String queryString = "query region($sidoName: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
                 " region(func: regexp(sidoName, $sidoName)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
@@ -238,10 +208,10 @@ public class WeatherDao<T> {
                 "  }\n" +
                 "}";
 
-        return query;
+        return queryString;
     }
 
-    private String queryBySidoAndSggNameAndDate(String dateQuery, String weatherEdge, String weatherRootQuery) {
+    private String queryWithSidoAndSggNameAndDate(String dateQuery, String weatherRootQuery, String weatherEdge) {
         String query = "query region($sidoName: string, $sggName: string, $year: int, $month: int, $day: int) {\n" +
                 " region(func: regexp(sidoName, $sidoName)) {\n" +
                 "    uid\n" +
@@ -265,7 +235,7 @@ public class WeatherDao<T> {
         return query;
     }
 
-    private String queryBySidoAndUmdNameAndDate(String dateQuery, String weatherEdge, String weatherRootQuery) {
+    private String queryWithSidoAndUmdNameAndDate(String dateQuery, String weatherRootQuery, String weatherEdge) {
         String query = "query region($sidoName: string, $umdName: string, $year: int, $month: int, $day: int) {\n" +
                 " region(func: regexp(sidoName, $sidoName)) {\n" +
                 "    uid\n" +
@@ -289,7 +259,7 @@ public class WeatherDao<T> {
         return query;
     }
 
-    private String queryBySidoAndSggAndUmdNameAndDate(String dateQuery, String weatherEdge, String weatherRootQuery) {
+    private String queryWithSidoAndSggAndUmdNameAndDate(String dateQuery, String weatherRootQuery, String weatherEdge) {
         String query = "query region($sidoName: string, $sggName: string, $umdName: string, $year: int, $month: int, $day: int) {\n" +
                 " region(func: regexp(sidoName, $sidoName)) {\n" +
                 "    uid\n" +
@@ -317,45 +287,83 @@ public class WeatherDao<T> {
         return query;
     }
 
-    private String queryByHour() {
+    private String queryWithHour() {
         String query =
                 "  date(func: eq(year, $year)) {\n" +
-                "    year\n" +
-                "    months @filter(eq(month, $month)) {\n" +
-                "      month\n" +
-                "      days @filter(eq(day, $day)) {\n" +
-                "        day\n" +
-                "        hours @filter(eq(hour, $hour)) {\n" +
-                "          uid\n" +
-                "          hour\n" +
-                "          var2 as hourlyWeathers {\n" +
-                "            uid\n" +
-                "          }\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n";
+                        "    year\n" +
+                        "    months @filter(eq(month, $month)) {\n" +
+                        "      month\n" +
+                        "      days @filter(eq(day, $day)) {\n" +
+                        "        day\n" +
+                        "        hours @filter(eq(hour, $hour)) {\n" +
+                        "          uid\n" +
+                        "          hour\n" +
+                        "          var2 as hourlyWeathers {\n" +
+                        "            uid\n" +
+                        "          }\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n";
 
         return query;
     }
 
-    private String queryByDay() {
+    private String queryWithDay() {
         String query =
                 "  date(func: eq(year, $year)) {\n" +
-                "    year\n" +
-                "    months @filter(eq(month, $month)) {\n" +
-                "      month\n" +
-                "      days @filter(eq(day, $day)) {\n" +
-                "        uid\n" +
-                "        day\n" +
-                "        var2 as dailyWeathers {\n" +
-                "          uid\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n";
+                        "    year\n" +
+                        "    months @filter(eq(month, $month)) {\n" +
+                        "      month\n" +
+                        "      days @filter(eq(day, $day)) {\n" +
+                        "        uid\n" +
+                        "        day\n" +
+                        "        var2 as dailyWeathers {\n" +
+                        "          uid\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n";
 
         return query;
+    }
+
+    public Optional<DailyWeather> getDailyWeatherNodeWithRegionUidAndDate(String uid, String date) {
+        DgraphProto.Response res;
+
+        res = queryForKweatherDay7OrAmPm7(uid, date, Query.DAILY_WEATHER.getRootQuery(), Query.DAILY_WEATHER.getEdge());
+
+        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        List<DailyWeather> dailyWeatherResult =  weatherRootQuery.getDailyWeather();
+
+       Optional<DailyWeather> result = Optional.empty();
+        if(!dailyWeatherResult.isEmpty() || !Optional.ofNullable(dailyWeatherResult).isPresent()) {
+            List<DailyWeather> dailyWeatherList = dailyWeatherResult.get(0).getDailyWeathers();
+            if(!dailyWeatherList.isEmpty()) {
+                result = Optional.of(dailyWeatherList.get(0));
+            }
+        }
+
+        return result;
+    }
+
+    private DgraphProto.Response queryForKweatherDay7OrAmPm7(String uid, String date, String weatherRootQuery, String weatherEdge) {
+        String query = "query " + weatherRootQuery + "($id: string, $date: string) {\n" +
+                "  " + weatherRootQuery + "(func: uid($id)) {\n" +
+                "    " + weatherEdge + " @filter(eq(tm, $date)) {\n" +
+                "      uid\n" +
+                "      expand(_all_)\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$id", uid);
+        var.put("$date", date);
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+
+        return res;
     }
 
     public void updateWeatherNode(T weather) {
