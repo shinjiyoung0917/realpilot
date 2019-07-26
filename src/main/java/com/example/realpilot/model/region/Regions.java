@@ -1,14 +1,15 @@
 package com.example.realpilot.model.region;
 
+import com.example.realpilot.model.weather.AmWeather;
 import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
+import com.example.realpilot.model.weather.PmWeather;
 import com.example.realpilot.utilAndConfig.RegionUnit;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Data
 public class Regions {
@@ -29,6 +30,8 @@ public class Regions {
     private List<Eubmyeondong> eubmyeondongs;
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
+    private List<AmWeather> amWeathers = new ArrayList<>();
+    private List<PmWeather> pmWeathers = new ArrayList<>();
 
     public void setRegionUidAndName(Regions region,  RegionUnit regionUnit) {
         switch (regionUnit) {
@@ -37,21 +40,31 @@ public class Regions {
                 this.sidoName = region.getSidoName();
                 break;
             case SIDO_SGG:
-                Optional.ofNullable(region.getSigungus()).ifPresent((sigungus) -> this.uid = sigungus.get(0).getUid());
-                Optional.ofNullable(region.getSigungus()).ifPresent((sigungus) -> this.sggName = sigungus.get(0).getSggName());
+                List<Sigungu> sigunguList1 = region.getSigungus();
+                if(Optional.ofNullable(sigunguList1).isPresent() && !sigunguList1.isEmpty()) {
+                    this.uid = sigunguList1.get(0).getUid();
+                    this.sggName = sigunguList1.get(0).getSggName();
+                    this.sigungus = sigunguList1;
+                }
                 break;
             case SIDO_SGG_UMD:
-                if(Optional.ofNullable(region.getSigungus()).isPresent()) {
-                    List<Eubmyeondong> eubmyeondongs = region.getSigungus().get(0).getEubmyeondongs();
-                    if(!eubmyeondongs.isEmpty()) {
+                List<Sigungu> sigunguList2 = region.getSigungus();
+                if(Optional.ofNullable(sigunguList2).isPresent()) {
+                    List<Eubmyeondong> eubmyeondongs = sigunguList2.get(0).getEubmyeondongs();
+                    if(Optional.ofNullable(eubmyeondongs).isPresent() && !eubmyeondongs.isEmpty()) {
                         this.uid = eubmyeondongs.get(0).getUid();
                         this.umdName = eubmyeondongs.get(0).getUmdName();
+                        this.sigungus = sigunguList2;
                     }
                 }
                 break;
             case SIDO_UMD:
-                Optional.ofNullable(region.getEubmyeondongs()).ifPresent((eubmyeondongs) -> this.uid = eubmyeondongs.get(0).getUid());
-                Optional.ofNullable(region.getEubmyeondongs()).ifPresent((eubmyeondongs) -> this.umdName = eubmyeondongs.get(0).getUmdName());
+                List<Eubmyeondong> eubmyeondongList = region.getEubmyeondongs();
+                if(Optional.ofNullable(eubmyeondongList).isPresent() && !eubmyeondongList.isEmpty()) {
+                    this.uid = eubmyeondongList.get(0).getUid();
+                    this.umdName = eubmyeondongList.get(0).getUmdName();
+                    this.eubmyeondongs = eubmyeondongList;
+                }
                 break;
         }
     }

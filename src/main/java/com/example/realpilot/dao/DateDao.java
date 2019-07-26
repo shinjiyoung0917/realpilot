@@ -31,7 +31,8 @@ public class DateDao<T> {
     // TODO: 해당 메서드 다른 클래스로 이동 (dgraph config 관련쪽으로?)
     public void createSchema(DgraphClient dgraphClient) {
         // ** DB ALTER ** //
-        dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
+        // TODO: 필요할 때만 사용 (ex. 잘못된 데이터 삽입했을 경우)
+        //dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
 
         String schema = "year: int @index(int) .\n" +
                 "month: int @index(int) .\n" +
@@ -52,7 +53,9 @@ public class DateDao<T> {
                 "fcstTime: string @index(fulltext) .\n" +
                 "tm: string @index(fulltext) .\n" +
                 "hourlyWeathers: uid @reverse .\n" +
-                "dailyWeathers: uid @reverse .";
+                "dailyWeathers: uid @reverse .\n" +
+                "amWeathers: uid @reverse .\n" +
+                "pmWeathers: uid @reverse .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -76,7 +79,7 @@ public class DateDao<T> {
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<DateRootQuery.DataByFunc> monthsCountResult = dateRootQuery.getMonthsCount();
 
-        if(!monthsCountResult.isEmpty() || !Optional.ofNullable(monthsCountResult).isPresent()) {
+        if(Optional.ofNullable(monthsCountResult).isPresent() && !monthsCountResult.isEmpty()) {
             if(Optional.ofNullable(monthsCountResult.get(0).getCountOfMonths()).isPresent()) {
                 return monthsCountResult.get(0).getCountOfMonths();
             }
@@ -152,13 +155,13 @@ public class DateDao<T> {
         List<Dates> dateResult =  dateRootQuery.getDate();
 
         Optional<Hour> result = Optional.empty();
-        if(!dateResult.isEmpty() || !Optional.ofNullable(dateResult).isPresent()) {
+        if(Optional.ofNullable(dateResult).isPresent() && !dateResult.isEmpty()) {
             List<Month> monthList = dateResult.get(0).getMonths();
-            if(!monthList.isEmpty()) {
+            if(Optional.ofNullable(monthList).isPresent() && !monthList.isEmpty()) {
                 List<Day> dayList = monthList.get(0).getDays();
-                if(!dayList.isEmpty()) {
+                if(Optional.ofNullable(dayList).isPresent() && !dayList.isEmpty()) {
                     List<Hour> hourList = dayList.get(0).getHours();
-                    if(!hourList.isEmpty()) {
+                    if(Optional.ofNullable(hourList).isPresent() && !hourList.isEmpty()) {
                         result = Optional.of(hourList.get(0));
                     }
                 }
@@ -192,11 +195,11 @@ public class DateDao<T> {
         List<Dates> dateResult =  dateRootQuery.getDate();
 
         Optional<Day> result = Optional.empty();
-        if(!dateResult.isEmpty() || !Optional.ofNullable(dateResult).isPresent()) {
+        if(Optional.ofNullable(dateResult).isPresent() && !dateResult.isEmpty()) {
             List<Month> monthList = dateResult.get(0).getMonths();
-            if(!monthList.isEmpty()) {
+            if(Optional.ofNullable(monthList).isPresent() && !monthList.isEmpty()) {
                 List<Day> dayList = monthList.get(0).getDays();
-                if(!dayList.isEmpty()) {
+                if(Optional.ofNullable(dayList).isPresent() && !dayList.isEmpty()) {
                     result = Optional.of(dayList.get(0));
                 }
             }

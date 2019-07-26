@@ -1,9 +1,7 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
-import com.example.realpilot.model.weather.DailyWeather;
-import com.example.realpilot.model.weather.HourlyWeather;
-import com.example.realpilot.model.weather.WeatherRootQuery;
+import com.example.realpilot.model.weather.*;
 import com.example.realpilot.service.DateService;
 import com.example.realpilot.utilAndConfig.*;
 import com.google.gson.Gson;
@@ -93,9 +91,9 @@ public class WeatherDao<T> {
         List<HourlyWeather> hourlyWeatherResult =  weatherRootQuery.getHourlyWeather();
 
         Optional<HourlyWeather> result = Optional.empty();
-        if(!hourlyWeatherResult.isEmpty() || !Optional.ofNullable(hourlyWeatherResult).isPresent()) {
+        if(Optional.ofNullable(hourlyWeatherResult).isPresent() && !hourlyWeatherResult.isEmpty()) {
             List<HourlyWeather> hourlyWeatherList = hourlyWeatherResult.get(0).getHourlyWeathers();
-            if(!hourlyWeatherList.isEmpty()) {
+            if(Optional.ofNullable(hourlyWeatherList).isPresent() && !hourlyWeatherList.isEmpty()) {
                 result = Optional.of(hourlyWeatherList.get(0));
             }
         }
@@ -337,10 +335,48 @@ public class WeatherDao<T> {
         List<DailyWeather> dailyWeatherResult =  weatherRootQuery.getDailyWeather();
 
        Optional<DailyWeather> result = Optional.empty();
-        if(!dailyWeatherResult.isEmpty() || !Optional.ofNullable(dailyWeatherResult).isPresent()) {
+        if(Optional.ofNullable(dailyWeatherResult).isPresent() && !dailyWeatherResult.isEmpty()) {
             List<DailyWeather> dailyWeatherList = dailyWeatherResult.get(0).getDailyWeathers();
-            if(!dailyWeatherList.isEmpty()) {
+            if(Optional.ofNullable(dailyWeatherList).isPresent() && !dailyWeatherList.isEmpty()) {
                 result = Optional.of(dailyWeatherList.get(0));
+            }
+        }
+
+        return result;
+    }
+
+    public Optional<AmWeather> getAmWeatherNodeWithRegionUidAndDate(String uid, String date) {
+        DgraphProto.Response res;
+
+        res = queryForKweatherDay7OrAmPm7(uid, date, Query.AM_WEATHER.getRootQuery(), Query.AM_WEATHER.getEdge());
+
+        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        List<AmWeather> amWeatherResult =  weatherRootQuery.getAmWeather();
+
+        Optional<AmWeather> result = Optional.empty();
+        if(Optional.ofNullable(amWeatherResult).isPresent() && !amWeatherResult.isEmpty()) {
+            List<AmWeather> amWeatherList = amWeatherResult.get(0).getAmWeathers();
+            if(Optional.ofNullable(amWeatherList).isPresent() && !amWeatherList.isEmpty()) {
+                result = Optional.of(amWeatherList.get(0));
+            }
+        }
+
+        return result;
+    }
+
+    public Optional<PmWeather> getPmWeatherNodeWithRegionUidAndDate(String uid, String date) {
+        DgraphProto.Response res;
+
+        res = queryForKweatherDay7OrAmPm7(uid, date, Query.PM_WEATHER.getRootQuery(), Query.PM_WEATHER.getEdge());
+
+        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        List<PmWeather> pmWeatherResult =  weatherRootQuery.getPmWeather();
+
+        Optional<PmWeather> result = Optional.empty();
+        if(Optional.ofNullable(pmWeatherResult).isPresent() && !pmWeatherResult.isEmpty()) {
+            List<PmWeather> pmWeatherList = pmWeatherResult.get(0).getPmWeathers();
+            if(Optional.ofNullable(pmWeatherList).isPresent() && !pmWeatherList.isEmpty()) {
+                result = Optional.of(pmWeatherList.get(0));
             }
         }
 

@@ -45,6 +45,20 @@ public class Weathers {
     private Integer maxtemp;
     private Integer rainp;
 
+    private String amIcon;
+    private String pmIcon;
+    private String amWtext;
+    private String pmWtext;
+    private Integer amMintemp;
+    private Integer pmMintemp;
+    private Integer amMaxtemp;
+    private Integer pmMaxtemp;
+    private Integer amRainp;
+    private Integer pmRainp;
+
+    private String icon40a;
+    private String temp;
+
     private String sidoName;
     private String sggName;
     private String umdName;
@@ -54,4 +68,7 @@ public class Weathers {
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
+    private List<AmWeather> amWeathers = new ArrayList<>();
+    private List<PmWeather> pmWeathers = new ArrayList<>();
+
 }
