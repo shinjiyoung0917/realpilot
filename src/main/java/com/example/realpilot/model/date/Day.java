@@ -2,6 +2,7 @@ package com.example.realpilot.model.date;
 
 import com.example.realpilot.model.weather.AmWeather;
 import com.example.realpilot.model.weather.DailyWeather;
+import com.example.realpilot.model.weather.HourlyWeather;
 import com.example.realpilot.model.weather.PmWeather;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ public class Day {
 
     private List<Hour> hours = new ArrayList<>();
 
+    private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();

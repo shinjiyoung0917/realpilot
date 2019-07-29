@@ -10,6 +10,7 @@ import java.util.List;
 public class Weathers {
     private String uid;
 
+    // TODO: HourlyWeather, DailyWeather, AmWeather, PmWeather에서 날짜, 시간 관련된 필드들 date, time으로 맞추기
     private String baseDate;
     private String baseTime;
     private String fcstDate;
@@ -41,23 +42,23 @@ public class Weathers {
     private String tmyo;
     private String icon;
     private String wtext;
-    private Integer mintemp;
-    private Integer maxtemp;
-    private Integer rainp;
+    private Float mintemp;
+    private Float maxtemp;
+    private Float rainp;
 
     private String amIcon;
     private String pmIcon;
     private String amWtext;
     private String pmWtext;
-    private Integer amMintemp;
-    private Integer pmMintemp;
-    private Integer amMaxtemp;
-    private Integer pmMaxtemp;
-    private Integer amRainp;
-    private Integer pmRainp;
+    private Float amMintemp;
+    private Float pmMintemp;
+    private Float amMaxtemp;
+    private Float pmMaxtemp;
+    private Float amRainp;
+    private Float pmRainp;
 
+    private Float temp;
     private String icon40a;
-    private String temp;
 
     private String sidoName;
     private String sggName;

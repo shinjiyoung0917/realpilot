@@ -11,10 +11,10 @@ public class DayOfAmPm7 {
     private String pmicon;
     private String amwtext;
     private String pmwtext;
-    private Integer ammintemp;
-    private Integer pmmintemp;
-    private Integer ammaxtemp;
-    private Integer pmmaxtemp;
-    private Integer amrainp;
-    private Integer pmrainp;
+    private Float ammintemp;
+    private Float pmmintemp;
+    private Float ammaxtemp;
+    private Float pmmaxtemp;
+    private Float amrainp;
+    private Float pmrainp;
 }

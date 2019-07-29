@@ -5,5 +5,6 @@ public enum ExternalWeatherApi {
     FORECAST_TIME,
     FORECAST_SPACE,
     KWEATHER_DAY7,
-    KWEATHER_AMPM7
+    KWEATHER_AMPM7,
+    KWEATHER_SHKO
 }

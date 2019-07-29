@@ -1,5 +1,8 @@
 package com.example.realpilot.model.weather;
 
+import com.example.realpilot.externalApiModel.kweatherShko.AreaOfShko;
+import com.example.realpilot.service.DateService;
+import com.example.realpilot.utilAndConfig.ExternalWeatherApi;
 import lombok.Data;
 
 import java.util.Map;
@@ -22,6 +25,17 @@ public class HourlyWeather extends Weathers {
         this.setFcstTime(fcstTime);
 
         setCategoryValue(categoryValueMap);
+    }
+
+    public void setHourlyWeather(String uid, AreaOfShko area) {
+        this.setUid(uid);
+        this.setTm(area.getTm());
+        this.setWtext(area.getWtext());
+        this.setTemp(area.getTemp());
+        this.setIcon40a(area.getIcon40a());
+        DateService dateService = new DateService();
+        String currentTime = dateService.makeCurrentHourFormat(ExternalWeatherApi.KWEATHER_SHKO) + "00";
+        this.setFcstTime(currentTime);
     }
 
     public void setCategoryValue(Map<String, Float> categoryValueMap) {

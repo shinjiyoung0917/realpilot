@@ -30,6 +30,8 @@ public class DateDao<T> {
 
     // TODO: 해당 메서드 다른 클래스로 이동 (dgraph config 관련쪽으로?)
     public void createSchema(DgraphClient dgraphClient) {
+        // TODO: Dgraph 새로 사용될 떄 이전에 비정상적으로 종료됐는지 확인해야하는지?
+
         // ** DB ALTER ** //
         // TODO: 필요할 때만 사용 (ex. 잘못된 데이터 삽입했을 경우)
         //dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
@@ -67,14 +69,14 @@ public class DateDao<T> {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(Calendar.YEAR);
 
-        String query = "query monthsCount($year: int) {\n" +
+        String queryString = "query monthsCount($year: int) {\n" +
                 " monthsCount(func: eq(year, $year)) {\n" +
                 "    countOfMonths: count(months)\n" +
                 "  }\n" +
                 "}";
 
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
 
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<DateRootQuery.DataByFunc> monthsCountResult = dateRootQuery.getMonthsCount();
@@ -128,7 +130,7 @@ public class DateDao<T> {
     }
 
     public Optional<Hour> getHourNode(Map<DateUnit, Integer> dateMap) {
-        String query = "query date($year: int, $month: int, $day: int, $hour: int) {\n" +
+        String queryString = "query date($year: int, $month: int, $day: int, $hour: int) {\n" +
                 " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
@@ -150,7 +152,7 @@ public class DateDao<T> {
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> dateResult =  dateRootQuery.getDate();
 
@@ -172,7 +174,7 @@ public class DateDao<T> {
     }
 
     public Optional<Day> getDayNode(Map<DateUnit, Integer> dateMap) {
-        String query = "query date($year: int, $month: int, $day: int) {\n" +
+        String queryString = "query date($year: int, $month: int, $day: int) {\n" +
                 " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
@@ -190,7 +192,7 @@ public class DateDao<T> {
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> dateResult =  dateRootQuery.getDate();
 

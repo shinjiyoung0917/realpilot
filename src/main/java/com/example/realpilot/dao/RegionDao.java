@@ -54,7 +54,7 @@ public class RegionDao {
     }
 
     public List<Regions> getRegionNodeWithGrid(Integer gridX, Integer gridY) {
-        String query = "query regionByGrid($gridX: int, $gridY: int) {\n" +
+        String queryString = "query regionByGrid($gridX: int, $gridY: int) {\n" +
                 " regionByGrid(func: eq(gridX, $gridX)) @filter(eq(gridY, $gridY)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
@@ -69,7 +69,7 @@ public class RegionDao {
         var.put("$gridX", String.valueOf(gridX));
         var.put("$gridY", String.valueOf(gridY));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(query, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
         List<Regions> regionByGrid =  regionRootQuery.getRegionByGrid();
 
@@ -77,7 +77,7 @@ public class RegionDao {
     }
 
     public List<Regions> getRegionNodeWithUid(String uid) {
-        String query = "query {\n" +
+        String queryString = "query {\n" +
                 " regionByUid(func:uid($uid)) {\n" +
                 "    expand(_all_)\n" +
                 "  }\n" +
@@ -85,7 +85,7 @@ public class RegionDao {
 
         Map<String, String> var = Collections.singletonMap("$uid", String.valueOf(uid));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(query);
+        DgraphProto.Response res = dgraphClient.newTransaction().query(queryString);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
         List<Regions> regionByUid =  regionRootQuery.getRegionByUid();
 

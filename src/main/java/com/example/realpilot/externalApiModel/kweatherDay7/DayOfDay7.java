@@ -9,7 +9,7 @@ public class DayOfDay7 {
     private String tmyo;
     private String icon;
     private String wtext;
-    private Integer mintemp;
-    private Integer maxtemp;
-    private Integer rainp;
+    private Float mintemp;
+    private Float maxtemp;
+    private Float rainp;
 }

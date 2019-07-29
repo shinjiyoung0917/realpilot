@@ -14,4 +14,14 @@ public class WeatherRootQuery {
     private List<PmWeather> pmWeather;
     private List<Regions> region;
     private List<Dates> date;
+
+    public void setWeatherRootQuery(WeatherRootQuery weatherRootQuery) {
+        this.setHourlyWeather(weatherRootQuery.getHourlyWeather());
+        this.setDailyWeather(weatherRootQuery.getDailyWeather());
+        this.setAmWeather(weatherRootQuery.getAmWeather());
+        this.setPmWeather(weatherRootQuery.getPmWeather());
+        this.setRegion(weatherRootQuery.getRegion());
+        this.setDate(weatherRootQuery.getDate());
+    }
+
 }

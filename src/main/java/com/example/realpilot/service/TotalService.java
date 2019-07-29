@@ -21,14 +21,14 @@ public class TotalService {
 
     @PostConstruct
     private void totalFlow() throws IOException {
-        regionService.doForAddressCodeFile();
-        regionService.doForGridFile();
+        //regionService.doForAddressCodeFile();
+        //regionService.doForGridFile();
         //regionService.callTmCoordinateApi();
 
         regionService.printRegionData();
 
-        regionService.addRegionNode();
-        dateService.addDateNode();
+        //regionService.addRegionNode();
+        //dateService.addDateNode();
 
         //weatherService.callWeatherApiByGrid();
         weatherService.callWeatherApiOfKweather();

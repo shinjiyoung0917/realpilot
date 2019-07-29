@@ -36,18 +36,23 @@ public class DateService {
         return  DgraphConfig.getInstance().getGraph();
     }*/
 
-    public String makeBaseDateFormat() {
+    public String makeCurrentDateFormat() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         String date = dateFormat.format(new Date());
 
         return date;
     }
 
-    public String makeBaseTimeFormat(ExternalWeatherApi api) {
-        Calendar calendar = Calendar.getInstance();
+    public String makeCurrentTimeFormat(ExternalWeatherApi api) {
+        String hourString = makeCurrentHourFormat(api);
+        String minuteString = makeCurrentMinuteFormat(api);
 
+       return hourString + minuteString;
+    }
+
+    public String makeCurrentHourFormat(ExternalWeatherApi api) {
+        Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
 
         if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
             if(hour >= 2 && hour < 5) {
@@ -69,34 +74,25 @@ public class DateService {
             }
         }
 
-        String hourString = "";
-        String minuteString = "";
+        return convertToDoubleDigit(hour);
+    }
 
-        if(hour < 10) {
-            hourString = "0" + hour;
+    public String makeCurrentMinuteFormat(ExternalWeatherApi api) {
+        Calendar calendar = Calendar.getInstance();
+        int minute = calendar.get(Calendar.MINUTE);
+
+        return convertToDoubleDigit(minute);
+    }
+
+    public String convertToDoubleDigit(int number) {
+        String numberString;
+        if(number < 10) {
+            numberString = "0" + number;
         } else {
-            hourString = String.valueOf(hour);
+            numberString = String.valueOf(number);
         }
 
-        if(minute < 10) {
-            minuteString = "0" + minute;
-        } else {
-            minuteString = String.valueOf(minute);
-        }
-
-        /*if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-            if (minute >= 0 && minute <= 59) {
-                minuteString = "00";
-            }
-        } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-            if (minute >= 0 && minute < 30) {
-                minuteString = "00";
-            } else {
-                minuteString = "30";
-            }
-        }*/
-
-       return hourString + minuteString;
+        return numberString;
     }
 
     public Map<DateUnit, Integer> getCurrentDate() {
