@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-public class Sigungu { // TODO: extends Regions
-    private String uid;
+public class Sigungu extends Regions {
+    /*private String uid;
 
     private String hCode;
     private String sggName;
@@ -21,9 +21,27 @@ public class Sigungu { // TODO: extends Regions
 
     private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
-    private List<DailyWeather> dailyWeathers = new ArrayList<>();
+    private List<DailyWeather> dailyWeathers = new ArrayList<>();*/
 
-    public Sigungu setRegion(Sido sidoObject, RegionData regionData) {
+    public Sigungu setSigungu(Sido sido, Regions region) {
+        this.setUid(region.getUid());
+        this.setHCode(region.getHCode());
+        this.setSggName(region.getSggName());
+        this.setCreatedDate(region.getCreatedDate());
+
+        // grid가 없는 경우도 있음
+        Optional optinalValue = Optional.ofNullable(region.getGridX());
+        if(optinalValue.isPresent()) {
+            this.setGridX(region.getGridX());
+            this.setGridY(region.getGridY());
+        }
+
+        sido.getSigungus().add(this);
+
+        return this;
+    }
+
+    /*public Sigungu setSigungu(Sido sido, RegionData regionData) {
         this.hCode = regionData.getHCode();
         this.sggName = regionData.getSggName();
         this.createdDate = regionData.getCreatedDate();
@@ -35,9 +53,9 @@ public class Sigungu { // TODO: extends Regions
             this.gridY = regionData.getGridY();
         }
 
-        sidoObject.getSigungus().add(this);
+        sido.getSigungus().add(this);
 
         return this;
-    }
+    }*/
 
 }

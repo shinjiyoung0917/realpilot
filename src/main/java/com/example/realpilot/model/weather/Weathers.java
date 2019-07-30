@@ -11,6 +11,7 @@ public class Weathers {
     private String uid;
 
     // TODO: HourlyWeather, DailyWeather, AmWeather, PmWeather에서 날짜, 시간 관련된 필드들 date, time으로 맞추기
+    // TODO: 케이웨더와 동네예보 API 데이터에서 발표시각과 예보시간을 어떤 필드로 사용할지?
     private String baseDate;
     private String baseTime;
     private String fcstDate;

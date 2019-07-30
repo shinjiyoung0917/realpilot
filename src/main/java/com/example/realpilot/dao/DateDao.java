@@ -91,7 +91,7 @@ public class DateDao<T> {
         return 0;
     }
 
-    public void createDateNode(Transaction transaction) {
+    public void createDateNode() {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(Calendar.YEAR);
 
@@ -126,7 +126,7 @@ public class DateDao<T> {
         Dates date = new Dates();
         date.getYears().add(year);
 
-        operations.mutate(transaction, date);
+        operations.mutate(dgraphClient.newTransaction(), date);
     }
 
     public Optional<Hour> getHourNode(Map<DateUnit, Integer> dateMap) {
@@ -211,7 +211,6 @@ public class DateDao<T> {
     }
 
     public void updateDateNode(T date) {
-        Transaction transaction = dgraphClient.newTransaction();
-        operations.mutate(transaction, date);
+        operations.mutate(dgraphClient.newTransaction(), date);
     }
 }

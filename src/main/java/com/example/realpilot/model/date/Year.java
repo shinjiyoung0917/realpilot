@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Year {
+public class Year { // TODO: extends Dates
     private String uid;
 
     private Integer year;

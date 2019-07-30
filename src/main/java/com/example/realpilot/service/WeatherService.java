@@ -53,22 +53,22 @@ public class WeatherService<T> {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Value("${api.serviceKey}")
+    private String serviceKey;
     @Value("${forecastGrib.api.url}")
     private String forecastGribApiUrl;
     @Value("${forecastTime.api.url}")
     private String forecastTimeApiUrl;
     @Value("${forecastSpace.api.url}")
     private String forecastSpaceApiUrl;
-    @Value("${weatherWarning.api.url}")
-    private String weatherWarningApiUrl;
-    @Value("${api.serviceKey}")
-    private String serviceKey;
     @Value("${kweatherDay7.api.url}")
     private String kweatherDay7ApiUrl;
     @Value("${kweatherAmPm7.api.url}")
     private String kweatherAmPm7ApiUrl;
     @Value("${kweatherShko.api.url}")
     private String kweatherShkoApiUrl;
+    @Value("${weatherWarning.api.url}")
+    private String weatherWarningApiUrl;
 
     private Integer GRID_X_IDNEX = 0;
     private Integer GRID_Y_INDEX = 1;
@@ -81,6 +81,7 @@ public class WeatherService<T> {
         ForecastTimeTopModel forecastTimeTopModel = new ForecastTimeTopModel();
         ForecastSpaceTopModel forecastSpaceTopModel = new ForecastSpaceTopModel();
 
+        // TODO: 엑셀 파일에서 로드한 메모리상에 있는 grid 데이터를 사용하는게 아니라, DB에 있는 grid 데이터를 사용하는게 나을지?
        for(List<Integer> grid : gridSet) {
            Integer gridX = grid.get(GRID_X_IDNEX);
            Integer gridY = grid.get(GRID_Y_INDEX);

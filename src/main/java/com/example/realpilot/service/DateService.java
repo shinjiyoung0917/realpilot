@@ -25,16 +25,11 @@ public class DateService {
         int dateNodeCount = dateDao.getDateNodeCount(dgraphClient);
 
         if(dateNodeCount == 0) {
-            Transaction transaction = dgraphClient.newTransaction();
-            //Transaction transaction = getGraphClient().newTransaction();
-
-            dateDao.createDateNode(transaction);
+            // TODO: 삽입할 때 이미 존재하는 노드인지 확인하는 로직 추가?
+            // TODO: 날짜 노드를 더 추가해야되는 시점?
+            dateDao.createDateNode();
         }
     }
-
-    /*public static DgraphClient getGraphClient() {
-        return  DgraphConfig.getInstance().getGraph();
-    }*/
 
     public String makeCurrentDateFormat() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");

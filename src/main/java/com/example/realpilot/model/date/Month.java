@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Month {
+public class Month { // TODO: extends Dates
     private String uid;
 
     private Integer month;

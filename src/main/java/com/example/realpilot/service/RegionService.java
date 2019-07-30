@@ -2,8 +2,13 @@ package com.example.realpilot.service;
 
 import com.example.realpilot.dao.RegionDao;
 import com.example.realpilot.excelModel.RegionData;
+import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
+import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationListTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
+import com.example.realpilot.model.region.Eubmyeondong;
+import com.example.realpilot.model.region.Regions;
+import com.example.realpilot.model.region.Sigungu;
 import com.example.realpilot.utilAndConfig.*;
 import com.sun.org.apache.xpath.internal.operations.Equals;
 import io.dgraph.DgraphClient;
@@ -36,17 +41,20 @@ public class RegionService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${tmCoordinate.api.url}")
-    private String tmCoordinateApiUrl;
     @Value("${api.serviceKey}")
     private String serviceKey;
+    @Value("${tmCoordinate.api.url}")
+    private String tmCoordinateApiUrl;
+    @Value("${nearbyMeasureStationList.api.url}")
+    private String measureStationApiUrl;
+
 
     @Value("${addressCode.file.path}")
     private String addressCodeFilePath;
     @Value("${grid.file.path}")
     private String gridFilePath;
 
-    public Map<String, RegionData> regionDataMap = new LinkedHashMap<>();
+    public Map<String, Regions> regionMap = new LinkedHashMap<>();
     public Set<List<Integer>> gridSet = new LinkedHashSet<>();
 
     public void doForAddressCodeFile() throws IOException {
@@ -90,7 +98,7 @@ public class RegionService {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
-                RegionData regionData = new RegionData();
+                Regions region = new Regions();
 
                 for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
@@ -98,12 +106,12 @@ public class RegionService {
                     if(cell == null) {
                         continue;
                     } else {
-                        keyString = regionData.setRegionDataByAddressCode(cell, columnIndex, keyString);
+                        keyString = region.setRegionByAddressCode(cell, columnIndex, keyString);
                     }
                 }
 
                 if (checkForValidData(keyString)) {
-                    regionDataMap.put(keyString, regionData);
+                    regionMap.put(keyString, region);
                 }
             }
         }
@@ -119,7 +127,7 @@ public class RegionService {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
-                RegionData tempRegionData = new RegionData();
+                Regions tempRegion = new Regions();
 
                 for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
@@ -127,8 +135,8 @@ public class RegionService {
                     if(cell == null) {
                         continue;
                     } else {
-                        Optional<RegionData> originalRegionData = Optional.ofNullable(regionDataMap.get(keyString));
-                        keyString = tempRegionData.setRegionDataByGrid(cell, columnIndex, keyString, originalRegionData);
+                        Optional<Regions> originalRegion = Optional.ofNullable(regionMap.get(keyString));
+                        keyString = tempRegion.setRegionByGrid(cell, columnIndex, keyString, originalRegion);
                     }
                 }
             }
@@ -136,7 +144,7 @@ public class RegionService {
     }
 
     private void addGridDataToSet() {
-        for(Map.Entry<String, RegionData> entry : regionDataMap.entrySet()) {
+        for(Map.Entry<String, Regions> entry : regionMap.entrySet()) {
             Optional optinalValue = Optional.ofNullable(entry.getValue().getGridX());
             if(optinalValue.isPresent()) {
                 List<Integer> grid = new ArrayList<>();
@@ -157,9 +165,7 @@ public class RegionService {
     }
 
     public void addRegionNode() {
-        Transaction transaction = dgraphClient.newTransaction();
-
-        regionDao.createRegionNode(transaction, regionDataMap);
+        regionDao.createRegionNode(regionMap);
         log.info("[Service] addRegionNode 로그 - DB에 지역 데이터 삽입 완료");
     }
 
@@ -167,6 +173,7 @@ public class RegionService {
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
         TmCoordinateTopModel tmCoordinateTopModel = new TmCoordinateTopModel();
+
         for(SidoList sido : SidoList.values()) {
             log.info("[Service] callTmCoordinateApi - 시도 이름 : " + sido.getSidoName());
 
@@ -184,25 +191,45 @@ public class RegionService {
                 e.printStackTrace();
             }
 
-            parseTmCoordinate(tmCoordinateTopModel.getList());
-        }
-    }
+            for(TmCoordinate tm : tmCoordinateTopModel.getList()) {
+                Optional<Regions> optionalRegion = regionDao.getRegionNodeWithName(tm.getSidoName(), tm.getSggName(), tm.getUmdName());
+                Regions region = new Regions();
 
-    private void parseTmCoordinate(List<TmCoordinate> tmCoordinateList) {
-        for(TmCoordinate tm : tmCoordinateList) {
-            String fullRegionName = tm.getSidoName() + tm.getSggName() + tm.getUmdName();
-            fullRegionName = fullRegionName.replaceAll(" ", "");
+                if(optionalRegion.isPresent()) {
+                    region = optionalRegion.get();
+                    List<Sigungu> sigunguList = region.getSigungus();
+                    if(Optional.ofNullable(sigunguList).isPresent() && !sigunguList.isEmpty()) {
+                        List<Eubmyeondong> eubmyeondongList = sigunguList.get(0).getEubmyeondongs();
+                        if(Optional.ofNullable(eubmyeondongList).isPresent() && !eubmyeondongList.isEmpty()) {
+                            region.setRegion(eubmyeondongList.get(0));
+                        }
+                    }
+                }
 
-            Optional<RegionData> optionalRegionData = Optional.ofNullable(regionDataMap.get(fullRegionName));
-            if(optionalRegionData.isPresent()) {
-                optionalRegionData.get().setRegionDataByTmCoord(tm);
+                regionDao.updateRegionNode(region);
             }
         }
     }
 
+    public void callNearbyMeasureStationListApi() {
+        NearbyMeasureStationListTopModel nearbyMeasureStationListTopModel = new NearbyMeasureStationListTopModel();
+
+        Set<Regions> tmXYSet = regionDao.getTmXY();
+        //for()
+        /*URI uri = URI.create(measureStationApiUrl + "?ServiceKey=" + serviceKey + "&tmX=" +  + "&tmY=" +  + "&_returnType=json");
+
+        try {
+            nearbyMeasureStationListTopModel = restTemplate.getForObject(uri, NearbyMeasureStationListTopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+
+    }
+
     public void printRegionData() {
-        for(String regionName : regionDataMap.keySet()) {
-            log.info("[Service] printRegionData - " + regionName + " / " + regionDataMap.get(regionName));
+        for(String regionName : regionMap.keySet()) {
+            log.info("[Service] printRegionData - " + regionName + " / " + regionMap.get(regionName));
         }
     }
 }

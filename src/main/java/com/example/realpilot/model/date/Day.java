@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Data
-public class Day {
+public class Day { // TODO: extends Dates
     private String uid;
 
     private Integer day;

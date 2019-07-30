@@ -1,5 +1,6 @@
 package com.example.realpilot.service;
 
+import com.example.realpilot.dao.RegionDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,19 +20,23 @@ public class TotalService {
     @Autowired
     private WeatherService weatherService;
 
+    @Autowired
+    private RegionDao regionDao;
+
     @PostConstruct
     private void totalFlow() throws IOException {
-        //regionService.doForAddressCodeFile();
-        //regionService.doForGridFile();
-        //regionService.callTmCoordinateApi();
+        regionService.doForAddressCodeFile();
+        regionService.doForGridFile();
 
+        regionService.addRegionNode();
         regionService.printRegionData();
-
-        //regionService.addRegionNode();
         //dateService.addDateNode();
 
+        regionService.callTmCoordinateApi();
+        //regionService.callNearbyMeasureStationListApi();
+
         //weatherService.callWeatherApiByGrid();
-        weatherService.callWeatherApiOfKweather();
+        //weatherService.callWeatherApiOfKweather();
         //weatherService.callWeatherWarningApi();
     }
 

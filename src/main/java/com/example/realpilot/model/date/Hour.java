@@ -5,10 +5,9 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
-public class Hour {
+public class Hour { // TODO: extends Dates
     private String uid;
 
     private Integer hour;
