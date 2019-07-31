@@ -1,18 +1,12 @@
 package com.example.realpilot.service;
 
 import com.example.realpilot.dao.RegionDao;
-import com.example.realpilot.excelModel.RegionData;
-import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
-import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationListTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
 import com.example.realpilot.model.region.Eubmyeondong;
 import com.example.realpilot.model.region.Regions;
 import com.example.realpilot.model.region.Sigungu;
 import com.example.realpilot.utilAndConfig.*;
-import com.sun.org.apache.xpath.internal.operations.Equals;
-import io.dgraph.DgraphClient;
-import io.dgraph.Transaction;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -35,8 +29,6 @@ public class RegionService {
 
     @Autowired
     private RegionDao regionDao;
-    @Autowired
-    private DgraphClient dgraphClient;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -45,9 +37,6 @@ public class RegionService {
     private String serviceKey;
     @Value("${tmCoordinate.api.url}")
     private String tmCoordinateApiUrl;
-    @Value("${nearbyMeasureStationList.api.url}")
-    private String measureStationApiUrl;
-
 
     @Value("${addressCode.file.path}")
     private String addressCodeFilePath;
@@ -201,6 +190,7 @@ public class RegionService {
                     if(Optional.ofNullable(sigunguList).isPresent() && !sigunguList.isEmpty()) {
                         List<Eubmyeondong> eubmyeondongList = sigunguList.get(0).getEubmyeondongs();
                         if(Optional.ofNullable(eubmyeondongList).isPresent() && !eubmyeondongList.isEmpty()) {
+                            eubmyeondongList.get(0).setEubmyeondongByTmCoord(tm);
                             region.setRegion(eubmyeondongList.get(0));
                         }
                     }
@@ -209,22 +199,6 @@ public class RegionService {
                 regionDao.updateRegionNode(region);
             }
         }
-    }
-
-    public void callNearbyMeasureStationListApi() {
-        NearbyMeasureStationListTopModel nearbyMeasureStationListTopModel = new NearbyMeasureStationListTopModel();
-
-        Set<Regions> tmXYSet = regionDao.getTmXY();
-        //for()
-        /*URI uri = URI.create(measureStationApiUrl + "?ServiceKey=" + serviceKey + "&tmX=" +  + "&tmY=" +  + "&_returnType=json");
-
-        try {
-            nearbyMeasureStationListTopModel = restTemplate.getForObject(uri, NearbyMeasureStationListTopModel.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-
-
     }
 
     public void printRegionData() {

@@ -319,6 +319,7 @@ public class WeatherService<T> {
             e.printStackTrace();
         }
 
+        // TODO: TopModel도 Optional 사용
         for (AreaOfDay7 area : kweatherDay7TopModel.getAreas()) {
             Regions foundRegion = new Regions();
 
@@ -331,8 +332,7 @@ public class WeatherService<T> {
             if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
                 sidoName = area.getAreaname1();
                 umdName = area.getAreaname2();
-                weatherRootQuery = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
-                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent(region -> foundRegion.setRegionUidAndName(region.get(0), RegionUnit.SIDO_UMD));
+                checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
             } else {
                 if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
                     sidoName = area.getAreaname2();

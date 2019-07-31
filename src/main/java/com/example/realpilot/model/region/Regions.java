@@ -1,6 +1,7 @@
 package com.example.realpilot.model.region;
 
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
+import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.weather.AmWeather;
 import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
@@ -26,16 +27,20 @@ public class Regions {
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
-    private Double tmX;
-    private Double tmY;
+    private Float tmX;
+    private Float tmY;
+
+    private String measureStationName;
+    private String measureStationAddr;
 
     private List<Sido> sidos = new ArrayList<>(); // 연속적으로 한번에 삽입할 때 사용
-    private List<Sigungu> sigungus;
-    private List<Eubmyeondong> eubmyeondongs;
+    private List<Sigungu> sigungus = new ArrayList<>();
+    private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
+    private List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
 
     public void setRegion(Regions region) {
         this.uid = region.getUid();
@@ -86,7 +91,6 @@ public class Regions {
         }
     }
 
-
     public String setRegionByAddressCode(XSSFCell cell, int columnIndex, String keyString) {
         if(columnIndex == AddressCodeFileIndex.ADDRESS_CODE_INDEX.getIndex()) {
             this.hCode = parseByDataType(cell);
@@ -129,11 +133,6 @@ public class Regions {
         }
 
         return keyString;
-    }
-
-    public void setRegionByTmCoord(TmCoordinate tm) {
-        this.tmX = tm.getTmX();
-        this.tmY = tm.getTmY();
     }
 
     private String parseByDataType(XSSFCell cell) {

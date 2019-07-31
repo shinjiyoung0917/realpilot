@@ -9,6 +9,6 @@ public class TmCoordinate {
     private String sidoName;
     private String sggName;
     private String umdName;
-    private Double tmX;
-    private Double tmY;
+    private Float tmX;
+    private Float tmY;
 }

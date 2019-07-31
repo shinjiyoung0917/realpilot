@@ -57,7 +57,8 @@ public class DateDao<T> {
                 "hourlyWeathers: uid @reverse .\n" +
                 "dailyWeathers: uid @reverse .\n" +
                 "amWeathers: uid @reverse .\n" +
-                "pmWeathers: uid @reverse .\n";
+                "pmWeathers: uid @reverse .\n" +
+                "airPollutionDetails: uid @reverse .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -69,14 +70,14 @@ public class DateDao<T> {
         Calendar calendar = Calendar.getInstance();
         int currentYear = calendar.get(Calendar.YEAR);
 
-        String queryString = "query monthsCount($year: int) {\n" +
+        String fullQueryString = "query monthsCount($year: int) {\n" +
                 " monthsCount(func: eq(year, $year)) {\n" +
                 "    countOfMonths: count(months)\n" +
                 "  }\n" +
                 "}";
 
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
 
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<DateRootQuery.DataByFunc> monthsCountResult = dateRootQuery.getMonthsCount();
@@ -130,7 +131,7 @@ public class DateDao<T> {
     }
 
     public Optional<Hour> getHourNode(Map<DateUnit, Integer> dateMap) {
-        String queryString = "query date($year: int, $month: int, $day: int, $hour: int) {\n" +
+        String fullQueryString = "query date($year: int, $month: int, $day: int, $hour: int) {\n" +
                 " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
@@ -152,7 +153,7 @@ public class DateDao<T> {
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> dateResult =  dateRootQuery.getDate();
 
@@ -174,7 +175,7 @@ public class DateDao<T> {
     }
 
     public Optional<Day> getDayNode(Map<DateUnit, Integer> dateMap) {
-        String queryString = "query date($year: int, $month: int, $day: int) {\n" +
+        String fullQueryString = "query date($year: int, $month: int, $day: int) {\n" +
                 " date(func: eq(year, $year)) {\n" +
                 "    year\n" +
                 "    months @filter(eq(month, $month)) {\n" +
@@ -192,7 +193,7 @@ public class DateDao<T> {
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
         List<Dates> dateResult =  dateRootQuery.getDate();
 
@@ -208,6 +209,62 @@ public class DateDao<T> {
         }
 
         return result;
+    }
+
+    public String getDateQueryString(DateUnit dateUnit, Map<String, String> var, Map<DateUnit, Integer> dateMap) {
+        String dateQueryString = "";
+        switch (dateUnit) {
+            case DAY:
+                dateQueryString = queryWithDay();
+                break;
+            case HOUR:
+                dateQueryString = queryWithHour();
+                var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
+                break;
+        }
+
+        return dateQueryString;
+    }
+
+    private String queryWithHour() {
+        String queryString =
+                "  date(func: eq(year, $year)) {\n" +
+                        "    year\n" +
+                        "    months @filter(eq(month, $month)) {\n" +
+                        "      month\n" +
+                        "      days @filter(eq(day, $day)) {\n" +
+                        "        day\n" +
+                        "        hours @filter(eq(hour, $hour)) {\n" +
+                        "          uid\n" +
+                        "          hour\n" +
+                        "          var2 as hourlyWeathers {\n" +
+                        "            uid\n" +
+                        "          }\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n";
+
+        return queryString;
+    }
+
+    private String queryWithDay() {
+        String queryString =
+                "  date(func: eq(year, $year)) {\n" +
+                        "    year\n" +
+                        "    months @filter(eq(month, $month)) {\n" +
+                        "      month\n" +
+                        "      days @filter(eq(day, $day)) {\n" +
+                        "        uid\n" +
+                        "        day\n" +
+                        "        var2 as dailyWeathers {\n" +
+                        "          uid\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  }\n";
+
+        return queryString;
     }
 
     public void updateDateNode(T date) {

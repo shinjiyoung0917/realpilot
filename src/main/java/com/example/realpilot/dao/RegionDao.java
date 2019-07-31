@@ -81,7 +81,7 @@ public class RegionDao {
     }
 
     public Optional<Regions> getRegionNodeWithName(String sidoName, String sggName, String umdName) {
-        String queryString = "query region($sidoName: string, $sggName: string, $umdName: string) {\n" +
+        String fullQueryString = "query region($sidoName: string, $sggName: string, $umdName: string) {\n" +
                 "  region(func: eq(sidoName, $sidoName)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
@@ -101,7 +101,7 @@ public class RegionDao {
         var.put("$sggName", String.valueOf(sggName));
         var.put("$umdName", String.valueOf(umdName));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
@@ -114,7 +114,7 @@ public class RegionDao {
     }
 
     public List<Regions> getRegionNodeWithGrid(Integer gridX, Integer gridY) {
-        String queryString = "query region($gridX: int, $gridY: int) {\n" +
+        String fullQueryString = "query region($gridX: int, $gridY: int) {\n" +
                 " region(func: eq(gridX, $gridX)) @filter(eq(gridY, $gridY)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
@@ -129,7 +129,7 @@ public class RegionDao {
         var.put("$gridX", String.valueOf(gridX));
         var.put("$gridY", String.valueOf(gridY));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(queryString, var);
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
@@ -137,34 +137,67 @@ public class RegionDao {
         return regionResult;
     }
 
-    public Set<Regions> getGridXY() {
-        String queryString = "query {\n" +
-                "  gridXY(func: has(gridX)) @filter(has(gridY)) {\n" +
+    public Optional<Set<Regions>> getGridList() {
+        String fullQueryString = "query {\n" +
+                "  grid(func: has(gridX)) @filter(has(gridY)) {\n" +
+                "    uid\n" +
                 "    gridX\n" +
                 "    gridY\n" +
                 "  }\n" +
                 "}\n";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(queryString);
+        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
-        Set<Regions> gridResult =  regionRootQuery.getGridXY();
+        Set<Regions> gridResult =  regionRootQuery.getGrid();
 
-        return gridResult;
+        Optional<Set<Regions>> result = Optional.empty();
+        if(Optional.ofNullable(gridResult).isPresent() && !gridResult.isEmpty()) {
+            result = Optional.of(gridResult);
+        }
+
+        return result;
     }
 
-    public Set<Regions> getTmXY() {
-        String queryString = "query {\n" +
-                "  tmXY(func: has(tmX)) @filter(has(tmY)) {\n" +
+    public Optional<Set<Eubmyeondong>> getTmCoordinateList() {
+        String fullQueryString = "query {\n" +
+                "  tmCoordinate(func: has(tmX)) @filter(has(tmY)) {\n" +
+                "    uid\n" +
                 "    tmX\n" +
                 "    tmY\n" +
                 "  }\n" +
                 "}\n";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(queryString);
+        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
-        Set<Regions> tmResult =  regionRootQuery.getTmXY();
+        Set<Eubmyeondong> tmCoordResult =  regionRootQuery.getTmCoordinate();
 
-        return tmResult;
+        Optional<Set<Eubmyeondong>> result = Optional.empty();
+        if(Optional.ofNullable(tmCoordResult).isPresent() && !tmCoordResult.isEmpty()) {
+            result = Optional.of(tmCoordResult);
+        }
+
+        return result;
+    }
+
+    public Optional<Set<Eubmyeondong>> getMeasureStationList() {
+        String fullQueryString = "query {\n" +
+                "  measureStationInfo(func: has(tmX)) @filter(has(tmY)) {\n" +
+                "    uid\n" +
+                "    tmX\n" +
+                "    tmY\n" +
+                "  }\n" +
+                "}\n";
+
+        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        Set<Eubmyeondong> measureStationInfoResult =  regionRootQuery.getMeasureStationInfo();
+
+        Optional<Set<Eubmyeondong>> result = Optional.empty();
+        if(Optional.ofNullable(measureStationInfoResult).isPresent() && !measureStationInfoResult.isEmpty()) {
+            result = Optional.of(measureStationInfoResult);
+        }
+
+        return result;
     }
 
    public void updateRegionNode(Regions region) {

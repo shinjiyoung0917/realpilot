@@ -16,12 +16,11 @@ public class WeatherRootQuery {
     private List<Dates> date;
 
     public void setWeatherRootQuery(WeatherRootQuery weatherRootQuery) {
-        this.setHourlyWeather(weatherRootQuery.getHourlyWeather());
-        this.setDailyWeather(weatherRootQuery.getDailyWeather());
-        this.setAmWeather(weatherRootQuery.getAmWeather());
-        this.setPmWeather(weatherRootQuery.getPmWeather());
-        this.setRegion(weatherRootQuery.getRegion());
-        this.setDate(weatherRootQuery.getDate());
+        this.hourlyWeather = weatherRootQuery.getHourlyWeather();
+        this.dailyWeather = weatherRootQuery.getDailyWeather();
+        this.amWeather = weatherRootQuery.getAmWeather();
+        this.pmWeather = weatherRootQuery.getPmWeather();
+        this.region = weatherRootQuery.getRegion();
+        this.date = weatherRootQuery.getDate();
     }
-
 }

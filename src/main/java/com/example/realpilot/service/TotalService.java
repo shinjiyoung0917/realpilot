@@ -19,6 +19,8 @@ public class TotalService {
     private DateService dateService;
     @Autowired
     private WeatherService weatherService;
+    @Autowired
+    private AirPollutionService airPollutionService;
 
     @Autowired
     private RegionDao regionDao;
@@ -33,7 +35,8 @@ public class TotalService {
         //dateService.addDateNode();
 
         regionService.callTmCoordinateApi();
-        //regionService.callNearbyMeasureStationListApi();
+        airPollutionService.callNearbyMeasureStationListApi();
+        airPollutionService.callRealTimeAirPollutionInfoApi();
 
         //weatherService.callWeatherApiByGrid();
         //weatherService.callWeatherApiOfKweather();
