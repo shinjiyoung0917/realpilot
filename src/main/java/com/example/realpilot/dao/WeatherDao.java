@@ -44,8 +44,8 @@ public class WeatherDao<T> {
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
-        String dateQueryString = dateDao.getDateQueryString(DateUnit.HOUR, var, dateMap);
-        String fullQueryString = queryWithRegionUidAndDate(dateQueryString, Query.HOURLY_WEATHER.getRootQuery(), Query.HOURLY_WEATHER.getEdge());
+        String dateQueryString = dateDao.getDateQueryString(DateUnit.HOUR, var, dateMap, Query.HOURLY_WEATHER);
+        String fullQueryString = queryWithGridAndDate(dateQueryString, Query.HOURLY_WEATHER.getRootQuery(), Query.HOURLY_WEATHER.getEdge());
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
@@ -53,7 +53,7 @@ public class WeatherDao<T> {
         return weatherRootQuery;
     }
 
-    private String queryWithRegionUidAndDate(String dateQueryString, String weatherRootQuery, String weatherEdge) {
+    private String queryWithGridAndDate(String dateQueryString, String weatherRootQuery, String weatherEdge) {
         String fullQueryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
                 " region(func: uid($id)) {\n" +
                 "    uid\n" +
@@ -160,7 +160,7 @@ public class WeatherDao<T> {
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
 
-        String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap);
+        String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
 
         switch (regionUnit) {
             case SIDO:

@@ -140,7 +140,6 @@ public class RegionDao {
     public Optional<Set<Regions>> getGridList() {
         String fullQueryString = "query {\n" +
                 "  grid(func: has(gridX)) @filter(has(gridY)) {\n" +
-                "    uid\n" +
                 "    gridX\n" +
                 "    gridY\n" +
                 "  }\n" +
@@ -158,10 +157,11 @@ public class RegionDao {
         return result;
     }
 
-    public Optional<Set<Eubmyeondong>> getTmCoordinateList() {
+    public Optional<Set<Regions>> getTmCoordinateList() {
         String fullQueryString = "query {\n" +
                 "  tmCoordinate(func: has(tmX)) @filter(has(tmY)) {\n" +
                 "    uid\n" +
+                "    umdName\n" +
                 "    tmX\n" +
                 "    tmY\n" +
                 "  }\n" +
@@ -169,9 +169,9 @@ public class RegionDao {
 
         DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
-        Set<Eubmyeondong> tmCoordResult =  regionRootQuery.getTmCoordinate();
+        Set<Regions> tmCoordResult =  regionRootQuery.getTmCoordinate();
 
-        Optional<Set<Eubmyeondong>> result = Optional.empty();
+        Optional<Set<Regions>> result = Optional.empty();
         if(Optional.ofNullable(tmCoordResult).isPresent() && !tmCoordResult.isEmpty()) {
             result = Optional.of(tmCoordResult);
         }
@@ -179,20 +179,20 @@ public class RegionDao {
         return result;
     }
 
-    public Optional<Set<Eubmyeondong>> getMeasureStationList() {
+    public Optional<Set<Regions>> getMeasureStationList() {
         String fullQueryString = "query {\n" +
-                "  measureStationInfo(func: has(tmX)) @filter(has(tmY)) {\n" +
+                "  measureStationInfo(func: has(measureStationName)) {\n" +
                 "    uid\n" +
-                "    tmX\n" +
-                "    tmY\n" +
+                "    umdName\n" +
+                "    measureStationName\n" +
                 "  }\n" +
                 "}\n";
 
         DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
         RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
-        Set<Eubmyeondong> measureStationInfoResult =  regionRootQuery.getMeasureStationInfo();
+        Set<Regions> measureStationInfoResult =  regionRootQuery.getMeasureStationInfo();
 
-        Optional<Set<Eubmyeondong>> result = Optional.empty();
+        Optional<Set<Regions>> result = Optional.empty();
         if(Optional.ofNullable(measureStationInfoResult).isPresent() && !measureStationInfoResult.isEmpty()) {
             result = Optional.of(measureStationInfoResult);
         }

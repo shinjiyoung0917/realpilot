@@ -6,14 +6,14 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RealTimeAirPollutionInfo {
-    private String date;
-    private String time;
-    private Float o3Value;
-    private Float pm10Value;
-    private Float pm25Value;
-    private Integer o3Grade;
-    private Integer pm10Grade;
-    private Integer pm25Grade;
-    private Integer pm10Grade1h;
-    private Integer pm25Grade1h;
+    private String dataTime;
+    private String mangName;
+    private String o3Value;
+    private String pm10Value;
+    private String pm25Value;
+    private String o3Grade;
+    private String pm10Grade;
+    private String pm25Grade;
+    private String pm10Grade1h;
+    private String pm25Grade1h;
 }

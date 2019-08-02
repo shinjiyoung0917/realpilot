@@ -32,7 +32,7 @@ public class HttpConfig {
 
         httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
         httpRequestFactory.setConnectTimeout(1000);
-        httpRequestFactory.setReadTimeout(3000);
+        httpRequestFactory.setReadTimeout(10000); //3000
         httpRequestFactory.setHttpClient(httpClient);
 
         return httpRequestFactory;

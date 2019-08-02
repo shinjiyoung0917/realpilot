@@ -159,7 +159,7 @@ public class RegionService {
     }
 
     public void callTmCoordinateApi() {
-        restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
+        //restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
         TmCoordinateTopModel tmCoordinateTopModel = new TmCoordinateTopModel();
 

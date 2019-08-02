@@ -13,6 +13,8 @@ public class AirPollutionRootQuery {
     private List<Dates> date;
 
     public void setAirPollutionRootQuery(AirPollutionRootQuery airPollutionRootQuery) {
-
+        this.airPollutionDetail = airPollutionRootQuery.getAirPollutionDetail();
+        this.region = airPollutionRootQuery.getRegion();
+        this.date = airPollutionRootQuery.getDate();
     }
 }

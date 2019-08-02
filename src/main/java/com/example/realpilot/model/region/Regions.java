@@ -1,5 +1,6 @@
 package com.example.realpilot.model.region;
 
+import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.weather.AmWeather;
@@ -27,8 +28,8 @@ public class Regions {
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
-    private Float tmX;
-    private Float tmY;
+    private Double tmX;
+    private Double tmY;
 
     private String measureStationName;
     private String measureStationAddr;
@@ -71,7 +72,7 @@ public class Regions {
                 break;
             case SIDO_SGG_UMD:
                 List<Sigungu> sigunguList2 = region.getSigungus();
-                if(Optional.ofNullable(sigunguList2).isPresent()) {
+                if(Optional.ofNullable(sigunguList2).isPresent() && !sigunguList2.isEmpty()) {
                     List<Eubmyeondong> eubmyeondongs = sigunguList2.get(0).getEubmyeondongs();
                     if(Optional.ofNullable(eubmyeondongs).isPresent() && !eubmyeondongs.isEmpty()) {
                         this.uid = eubmyeondongs.get(0).getUid();
@@ -142,8 +143,8 @@ public class Regions {
                 value = cell.getCellFormula();
                 break;
             case NUMERIC:
-                Double doubleValue = Double.valueOf(cell.getNumericCellValue());
-                Integer integerValue = Integer.valueOf(doubleValue.intValue());
+                Double doubleValue = cell.getNumericCellValue();
+                Integer integerValue = doubleValue.intValue();
                 value = integerValue.toString();
                 break;
             case STRING:
@@ -153,5 +154,10 @@ public class Regions {
                 break;
         }
         return value;
+    }
+
+    public void setEubmyeondongByMeasureSation(NearbyMeasureStationList measureStation) {
+        this.setMeasureStationName(measureStation.getStationName());
+        this.setMeasureStationAddr(measureStation.getAddr());
     }
 }

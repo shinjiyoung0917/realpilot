@@ -3,6 +3,7 @@ package com.example.realpilot.dao;
 import com.example.realpilot.model.date.*;
 import com.example.realpilot.dgraph.DgraphOperations;
 import com.example.realpilot.utilAndConfig.DateUnit;
+import com.example.realpilot.utilAndConfig.Query;
 import com.google.gson.Gson;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphProto;
@@ -27,44 +28,6 @@ public class DateDao<T> {
 
     private static final int TOTAL_TIME_OF_DAY = 24;
     private static final int TOTAL_MONTHS_OF_YEAR = 12;
-
-    // TODO: 해당 메서드 다른 클래스로 이동 (dgraph config 관련쪽으로?)
-    public void createSchema(DgraphClient dgraphClient) {
-        // TODO: Dgraph 새로 사용될 떄 이전에 비정상적으로 종료됐는지 확인해야하는지?
-
-        // ** DB ALTER ** //
-        // TODO: 필요할 때만 사용 (ex. 잘못된 데이터 삽입했을 경우)
-        //dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
-
-        String schema = "year: int @index(int) .\n" +
-                "month: int @index(int) .\n" +
-                "day: int @index(int) .\n" +
-                "hour: int @index(int) .\n" +
-                "sidoName: string @index(fulltext, trigram) .\n" +
-                "sggName: string @index(fulltext, trigram) .\n" +
-                "umdName: string @index(fulltext, trigram) .\n" +
-                "hCode: int @index(int) .\n" +
-                "createdDate: int @index(int) .\n" +
-                "gridX: int @index(int) .\n" +
-                "gridY: int @index(int) .\n" +
-                "tmX: float @index(float) .\n" +
-                "tmY: float @index(float) .\n" +
-                "baseDate: string @index(fulltext) .\n" +
-                "baseTime: string @index(fulltext) .\n" +
-                "fcstDate: string @index(fulltext) .\n" +
-                "fcstTime: string @index(fulltext) .\n" +
-                "tm: string @index(fulltext) .\n" +
-                "hourlyWeathers: uid @reverse .\n" +
-                "dailyWeathers: uid @reverse .\n" +
-                "amWeathers: uid @reverse .\n" +
-                "pmWeathers: uid @reverse .\n" +
-                "airPollutionDetails: uid @reverse .\n";
-
-        DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
-        dgraphClient.alter(op);
-
-        log.info("[Dao] createSchema - DGraph 스키마 세팅 완료");
-    }
 
     public int getDateNodeCount(DgraphClient dgraphClient) {
         Calendar calendar = Calendar.getInstance();
@@ -211,14 +174,14 @@ public class DateDao<T> {
         return result;
     }
 
-    public String getDateQueryString(DateUnit dateUnit, Map<String, String> var, Map<DateUnit, Integer> dateMap) {
+    public String getDateQueryString(DateUnit dateUnit, Map<String, String> var, Map<DateUnit, Integer> dateMap, Query rootQuery) {
         String dateQueryString = "";
         switch (dateUnit) {
             case DAY:
-                dateQueryString = queryWithDay();
+                dateQueryString = queryWithDay(rootQuery.getEdge());
                 break;
             case HOUR:
-                dateQueryString = queryWithHour();
+                dateQueryString = queryWithHour(rootQuery.getEdge());
                 var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
                 break;
         }
@@ -226,7 +189,7 @@ public class DateDao<T> {
         return dateQueryString;
     }
 
-    private String queryWithHour() {
+    private String queryWithHour(String edge) {
         String queryString =
                 "  date(func: eq(year, $year)) {\n" +
                         "    year\n" +
@@ -237,7 +200,7 @@ public class DateDao<T> {
                         "        hours @filter(eq(hour, $hour)) {\n" +
                         "          uid\n" +
                         "          hour\n" +
-                        "          var2 as hourlyWeathers {\n" +
+                        "          var2 as " + edge + " {\n" +
                         "            uid\n" +
                         "          }\n" +
                         "        }\n" +
@@ -248,7 +211,7 @@ public class DateDao<T> {
         return queryString;
     }
 
-    private String queryWithDay() {
+    private String queryWithDay(String edge) {
         String queryString =
                 "  date(func: eq(year, $year)) {\n" +
                         "    year\n" +
@@ -257,7 +220,7 @@ public class DateDao<T> {
                         "      days @filter(eq(day, $day)) {\n" +
                         "        uid\n" +
                         "        day\n" +
-                        "        var2 as dailyWeathers {\n" +
+                        "        var2 as " + edge + " {\n" +
                         "          uid\n" +
                         "        }\n" +
                         "      }\n" +

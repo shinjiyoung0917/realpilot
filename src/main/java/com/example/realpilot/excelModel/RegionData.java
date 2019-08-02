@@ -18,7 +18,7 @@ public class RegionData {
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
-    private Float tmX;
-    private Float tmY;*/
+    private Double tmX;
+    private Double tmY;*/
 
 }

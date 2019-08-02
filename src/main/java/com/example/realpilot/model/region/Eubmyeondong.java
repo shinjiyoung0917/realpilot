@@ -20,8 +20,8 @@ public class Eubmyeondong<T> extends Regions {
     private String createdDate;
     private Integer gridX;
     private Integer gridY;
-    private Float tmX;
-    private Float tmY;
+    private Double tmX;
+    private Double tmY;
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();*/
@@ -63,11 +63,6 @@ public class Eubmyeondong<T> extends Regions {
     public void setEubmyeondongByTmCoord(TmCoordinate tm) {
         this.setTmX(tm.getTmX());
         this.setTmY(tm.getTmY());
-    }
-
-    public void setEubmyeondongByMeasureSation(NearbyMeasureStationList measureStation) {
-        this.setMeasureStationName(measureStation.getStationName());
-        this.setMeasureStationAddr(measureStation.getAddr());
     }
 
  /*   public void setEubmyeondong(Regions region) {

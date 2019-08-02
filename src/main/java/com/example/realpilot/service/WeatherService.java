@@ -81,17 +81,17 @@ public class WeatherService<T> {
         ForecastTimeTopModel forecastTimeTopModel = new ForecastTimeTopModel();
         ForecastSpaceTopModel forecastSpaceTopModel = new ForecastSpaceTopModel();
 
-        // TODO: 엑셀 파일에서 로드한 메모리상에 있는 grid 데이터를 사용하는게 아니라, DB에 있는 grid 데이터를 사용하는게 나을지?
-       for(List<Integer> grid : gridSet) {
-           Integer gridX = grid.get(GRID_X_IDNEX);
-           Integer gridY = grid.get(GRID_Y_INDEX);
+        Optional<Set<Regions>> optionalGridList = regionDao.getGridList();
 
-           List<Regions> regionByGrid = regionDao.getRegionNodeWithGrid(gridX, gridY);
+       for(Regions region : optionalGridList.get()) {
+           Integer gridX = region.getGridX();
+           Integer gridY = region.getGridY();
+
+           List<Regions> regionList = regionDao.getRegionNodeWithGrid(gridX, gridY);
 
            String baseDate = dateService.makeCurrentDateFormat();
            String baseTime = dateService.makeCurrentTimeFormat(ExternalWeatherApi.FORECAST_GRIB);
-           // TODO: 고정시킨 시간 값 지우기
-           baseTime = "0800";
+           baseTime = "1800";
 
            String parameters = "?ServiceKey=" + serviceKey + "&base_date=" + baseDate + "&base_time=" + baseTime + "&nx=" + gridX + "&ny=" + gridY + "&numOfRows=300&_type=json";
            URI forecastGribUri = URI.create(forecastGribApiUrl + parameters);
@@ -99,15 +99,15 @@ public class WeatherService<T> {
            URI forecastSpaceUri = URI.create(forecastSpaceApiUrl + parameters);
 
 
-           callForecastGribApi(forecastGribTopModel, forecastGribUri, baseDate, baseTime, regionByGrid);
-           //callForecastTimeApi(forecastTimeTopModel, forecastTimeUri, baseDate, baseTime, regionByGrid);
+           callForecastGribApi(forecastGribTopModel, forecastGribUri, baseDate, baseTime, regionList);
+           //callForecastTimeApi(forecastTimeTopModel, forecastTimeUri, baseDate, baseTime, regionList);
 
            baseTime = dateService.makeCurrentTimeFormat(ExternalWeatherApi.FORECAST_SPACE);
-           //callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionByGrid);
+           //callForecastSpaceApi(forecastSpaceTopModel, forecastSpaceUri, baseDate, baseTime, regionList);
        }
     }
 
-    private void callForecastGribApi(ForecastGribTopModel forecastGribTopModel,URI forecastGribUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
+    private void callForecastGribApi(ForecastGribTopModel forecastGribTopModel,URI forecastGribUri, String baseDate, String baseTime, List<Regions> regionList) {
         try {
             forecastGribTopModel = restTemplate.getForObject(forecastGribUri, ForecastGribTopModel.class);
         } catch (Exception e) {
@@ -129,10 +129,10 @@ public class WeatherService<T> {
 
         Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
-        connectRegionAndHourlyWeatherAndDateNode(dateMap, baseDate, baseTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_GRIB);
+        connectRegionAndHourlyWeatherAndDateNode(dateMap, baseDate, baseTime, regionList, hourlyWeather, ExternalWeatherApi.FORECAST_GRIB);
     }
 
-    private void callForecastTimeApi(ForecastTimeTopModel forecastTimeTopModel, URI forecastTimeUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
+    private void callForecastTimeApi(ForecastTimeTopModel forecastTimeTopModel, URI forecastTimeUri, String baseDate, String baseTime, List<Regions> regionList) {
         try {
             forecastTimeTopModel = restTemplate.getForObject(forecastTimeUri, ForecastTimeTopModel.class);
         } catch (Exception e) {
@@ -193,11 +193,11 @@ public class WeatherService<T> {
             String fcstTime = hourlyWeather.getFcstTime();
             Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
 
-            connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
+            connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionList, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
         }
     }
 
-    private void callForecastSpaceApi(ForecastSpaceTopModel forecastSpaceTopModel, URI forecastSpaceUri, String baseDate, String baseTime, List<Regions> regionByGrid) {
+    private void callForecastSpaceApi(ForecastSpaceTopModel forecastSpaceTopModel, URI forecastSpaceUri, String baseDate, String baseTime, List<Regions> regionList) {
         try {
             forecastSpaceTopModel = restTemplate.getForObject(forecastSpaceUri, ForecastSpaceTopModel.class);
         } catch (Exception e) {
@@ -237,50 +237,68 @@ public class WeatherService<T> {
 
             Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
 
-            connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionByGrid, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
+            connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionList, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
         }
     }
 
-    private void connectRegionAndHourlyWeatherAndDateNode(Map<DateUnit, Integer> dateMap, String date, String time, List<Regions> regionByGrid, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
+    private void connectRegionAndHourlyWeatherAndDateNode(Map<DateUnit, Integer> dateMap, String date, String time, List<Regions> regionList, HourlyWeather hourlyWeather, ExternalWeatherApi api) {
         Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
-        for(Regions oneRegion : regionByGrid) {
-            Regions foundRegion = new Regions();
 
-            WeatherRootQuery weatherRootQuery = weatherDao.getAlreadyExistingWeatherNodeWithRegionUidAndDate(oneRegion.getUid());
+        if (Optional.ofNullable(regionList).isPresent() && !regionList.isEmpty()) {
+            for (Regions oneRegion : regionList) {
+                Regions foundRegion = new Regions();
 
-            List<HourlyWeather> hourlyWeatherList = weatherRootQuery.getHourlyWeather();
-            HourlyWeather newHourlyWeather = hourlyWeather;
+                WeatherRootQuery weatherRootQuery = weatherDao.getAlreadyExistingWeatherNodeWithRegionUidAndDate(oneRegion.getUid());
 
-            if(Optional.ofNullable(hourlyWeatherList).isPresent() && !hourlyWeatherList.isEmpty()) {
-                HourlyWeather oldHourlyWeather = hourlyWeatherList.get(0);
-                hourlyWeather.setUid(oldHourlyWeather.getUid());
-                weatherDao.updateWeatherNode(hourlyWeather);
-            } else {
-                Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent(region -> foundRegion.setUid(region.get(0).getUid()));
+                List<HourlyWeather> hourlyWeatherList = weatherRootQuery.getHourlyWeather();
+                HourlyWeather newHourlyWeather = hourlyWeather;
 
-                foundRegion.getHourlyWeathers().add(newHourlyWeather);
-                regionDao.updateRegionNode(foundRegion);
+                if (Optional.ofNullable(hourlyWeatherList).isPresent() && !hourlyWeatherList.isEmpty()) {
+                    HourlyWeather oldHourlyWeather = hourlyWeatherList.get(0);
+                    hourlyWeather.setUid(oldHourlyWeather.getUid());
+                    weatherDao.updateWeatherNode(hourlyWeather);
+                } else {
+                    foundRegion.setUid(oneRegion.getUid());
 
-                Optional<HourlyWeather> foundHourlyWeather = Optional.empty();
+                    Optional<HourlyWeather> foundHourlyWeather1 = Optional.empty();
 
-                if(api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
-                } else if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
-                } else if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
-                    foundHourlyWeather = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
-                }
+                    if (api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
+                        foundHourlyWeather1 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
+                    } else if (api.equals(ExternalWeatherApi.FORECAST_TIME)) {
+                        foundHourlyWeather1 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+                    } else if (api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+                        foundHourlyWeather1 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
+                    }
 
-                if(Optional.ofNullable(hourNode).isPresent()) {
-                    Optional<HourlyWeather> finalFoundHourlyWeather = foundHourlyWeather;
-                    hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(finalFoundHourlyWeather.get()));
+                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>(null);
+                    foundHourlyWeather1.ifPresent(notNullHourlyWeather -> hourlyWeatherUid.set(notNullHourlyWeather.getUid()));
+
+                    hourlyWeather.setUid(hourlyWeatherUid.get());
+
+                    foundRegion.getHourlyWeathers().add(newHourlyWeather);
+                    regionDao.updateRegionNode(foundRegion);
+
+                    Optional<HourlyWeather> foundHourlyWeather2 = Optional.empty();
+
+                    if (api.equals(ExternalWeatherApi.FORECAST_GRIB)) {
+                        foundHourlyWeather2 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_GRIB);
+                    } else if (api.equals(ExternalWeatherApi.FORECAST_TIME)) {
+                        foundHourlyWeather2 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_TIME);
+                    } else if (api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+                        foundHourlyWeather2 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
+                    }
+
+                    if (Optional.ofNullable(hourNode).isPresent()) {
+                        Optional<HourlyWeather> finalFoundHourlyWeather = foundHourlyWeather2;
+                        hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(finalFoundHourlyWeather.get()));
+                    }
                 }
             }
         }
         dateDao.updateDateNode(hourNode);
 
-        hourNode.ifPresent(hour -> log.info("[Service] connectRegionAndWeatherAndDateNode - " + hour.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료"));
+        hourNode.ifPresent(hour -> log.info("[Service] connectRegionAndHourlyWeatherAndDateNode - " + hour.getHour() + "시의 " + "지역->날씨<-날짜 노드 연결 완료"));
     }
 
     private int getFcstTimeCount(String baseTime) {
@@ -307,9 +325,9 @@ public class WeatherService<T> {
         URI kweatherAmPm7Uri = URI.create(kweatherAmPm7ApiUrl);
         URI kweatherShkoUri = URI.create(kweatherShkoApiUrl);
 
-        //callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri);
+        callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri);
         //callKweatherAmPm7Api(kweatherAmPm7TopModel, kweatherAmPm7Uri);
-        callKweatherShkoApi(kweatherShkoTopModel, kweatherShkoUri);
+        //callKweatherShkoApi(kweatherShkoTopModel, kweatherShkoUri);
     }
 
     private void callKweatherDay7Api(KweatherDay7TopModel kweatherDay7TopModel, URI kweatherDay7Uri) {
@@ -327,7 +345,7 @@ public class WeatherService<T> {
             String sggName = "";
             String umdName = "";
 
-            WeatherRootQuery weatherRootQuery = null;
+            WeatherRootQuery weatherRootQuery = new WeatherRootQuery();
 
             if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
                 sidoName = area.getAreaname1();
@@ -371,8 +389,14 @@ public class WeatherService<T> {
                     }
                 } else {
                     for (DayOfDay7 oneDay : area.getDayList()) {
+                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>();
+                        Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+
+                        AtomicReference<String> dailyWeatherUid = new AtomicReference<>(null);
+                        foundDailyWeather.get().ifPresent(notNullDailyWeather-> dailyWeatherUid.set(notNullDailyWeather.getUid()));
+
                         newDailyWeather = new DailyWeather();
-                        newDailyWeather.setDailyWeather(null, oneDay);
+                        newDailyWeather.setDailyWeather(dailyWeatherUid.get(), oneDay);
 
                         foundRegion.getDailyWeathers().add(newDailyWeather);
                     }
@@ -410,8 +434,8 @@ public class WeatherService<T> {
             String sggName = "";
             String umdName = "";
 
-            WeatherRootQuery weatherRootQueryForAm = null;
-            WeatherRootQuery weatherRootQueryForPm = null;
+            WeatherRootQuery weatherRootQueryForAm = new WeatherRootQuery();
+            WeatherRootQuery weatherRootQueryForPm = new WeatherRootQuery();
 
             Optional<RegionUnit> regionUnit = Optional.empty();
 
@@ -481,8 +505,14 @@ public class WeatherService<T> {
             }
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
+                AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>();
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+
+                AtomicReference<String> amWeatherUid = new AtomicReference<>(null);
+                foundAmWeather.get().ifPresent(notNullAmWeather-> amWeatherUid.set(notNullAmWeather.getUid()));
+
                 newAmWeather = new AmWeather();
-                newAmWeather.setAmWeather(null, oneDay);
+                newAmWeather.setAmWeather(amWeatherUid.get(), oneDay);
 
                 foundRegion.getAmWeathers().add(newAmWeather);
             }
@@ -514,8 +544,14 @@ public class WeatherService<T> {
             }
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
+                AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>();
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+
+                AtomicReference<String> pmWeatherUid = new AtomicReference<>(null);
+                foundPmWeather.get().ifPresent(notNullPmWeather-> pmWeatherUid.set(notNullPmWeather.getUid()));
+
                 newPmWeather = new PmWeather();
-                newPmWeather.setPmWeather(null, oneDay);
+                newPmWeather.setPmWeather(pmWeatherUid.get(), oneDay);
 
                 foundRegion.getPmWeathers().add(newPmWeather);
             }
@@ -591,23 +627,30 @@ public class WeatherService<T> {
                     newHourlyWeather.setHourlyWeather(oldHourlyWeather.getUid(), area);
                     weatherDao.updateWeatherNode(newHourlyWeather);
                 } else {
+                    Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
+                    String time = dateMap.get(DateUnit.HOUR).toString() + "00";
+
+                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather1 = new AtomicReference<>();
+                    Optional.ofNullable(foundRegion.getUid())
+                            .ifPresent(uid -> foundHourlyWeather1.set(weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, area.getTm(), time, ExternalWeatherApi.KWEATHER_SHKO)));
+
+                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>(null);
+                    foundHourlyWeather1.get().ifPresent(notNullHourlyWeather-> hourlyWeatherUid.set(notNullHourlyWeather.getUid()));
+
                     newHourlyWeather = new HourlyWeather();
-                    newHourlyWeather.setHourlyWeather(null, area);
+                    newHourlyWeather.setHourlyWeather(hourlyWeatherUid.get(), area);
 
                     foundRegion.getHourlyWeathers().add(newHourlyWeather);
 
                     regionDao.updateRegionNode(foundRegion);
 
-                    Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
-                    String time = dateMap.get(DateUnit.HOUR).toString() + "00";
-
-                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather = new AtomicReference<>();
+                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather2 = new AtomicReference<>();
                     Optional.ofNullable(foundRegion.getUid())
-                            .ifPresent(uid -> foundHourlyWeather.set(weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, area.getTm(), time, ExternalWeatherApi.KWEATHER_SHKO)));
+                            .ifPresent(uid -> foundHourlyWeather2.set(weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, area.getTm(), time, ExternalWeatherApi.KWEATHER_SHKO)));
 
                     Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
-                    hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(foundHourlyWeather.get().get()));
+                    hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(foundHourlyWeather2.get().get()));
                     dateDao.updateDateNode(hourNode);
                 }
             }
@@ -622,8 +665,6 @@ public class WeatherService<T> {
     }
 
     public void callWeatherWarningApi() {
-        restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
-
         URI uri = URI.create(weatherWarningApiUrl + "?ServiceKey=" + serviceKey + "&fromTmFc=20190528&toTmFc=20190704&_type=json");
 
         WeatherWarningTopModel weatherWarningTopModel = restTemplate.getForObject(uri, WeatherWarningTopModel.class);
