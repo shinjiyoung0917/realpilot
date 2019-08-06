@@ -1,5 +1,6 @@
 package com.example.realpilot.dgraph;
 
+import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphGrpc;
 import io.dgraph.DgraphProto;
@@ -34,6 +35,11 @@ public class DgraphConfig {
             DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
 
             DgraphClient dgraphClient = new DgraphClient(stub);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             createSchema(dgraphClient);
 
             return dgraphClient;
@@ -61,6 +67,7 @@ public class DgraphConfig {
                 "sidoName: string @index(fulltext, trigram) .\n" +
                 "sggName: string @index(fulltext, trigram) .\n" +
                 "umdName: string @index(fulltext, trigram) .\n" +
+                "countryName: string @index(fulltext, trigram) .\n" +
                 "hCode: int @index(int) .\n" +
                 "createdDate: int @index(int) .\n" +
                 "gridX: int @index(int) .\n" +
@@ -68,6 +75,7 @@ public class DgraphConfig {
                 "tmX: float @index(float) .\n" +
                 "tmY: float @index(float) .\n" +
                 "measureStationName: string @index(fulltext) .\n" +
+                "airPollutionCode: string @index(fulltext) .\n" +
                 "baseDate: string @index(fulltext) .\n" +
                 "baseTime: string @index(fulltext) .\n" +
                 "fcstDate: string @index(fulltext) .\n" +
@@ -79,7 +87,8 @@ public class DgraphConfig {
                 "dailyWeathers: uid @reverse .\n" +
                 "amWeathers: uid @reverse .\n" +
                 "pmWeathers: uid @reverse .\n" +
-                "airPollutionDetails: uid @reverse .\n";
+                "airPollutionDetails: uid @reverse .\n" +
+                "airPollutionOveralls: uid @reverse .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);

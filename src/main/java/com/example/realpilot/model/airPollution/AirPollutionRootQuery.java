@@ -8,13 +8,15 @@ import java.util.List;
 
 @Data
 public class AirPollutionRootQuery {
-    private List<AirPollutionDetail> airPollutionDetail;
     private List<Regions> region;
     private List<Dates> date;
+    private List<AirPollutionDetail> airPollutionDetail;
+    private List<AirPollutionOverall> airPollutionOverall;
 
     public void setAirPollutionRootQuery(AirPollutionRootQuery airPollutionRootQuery) {
-        this.airPollutionDetail = airPollutionRootQuery.getAirPollutionDetail();
         this.region = airPollutionRootQuery.getRegion();
         this.date = airPollutionRootQuery.getDate();
+        this.airPollutionDetail = airPollutionRootQuery.getAirPollutionDetail();
+        this.airPollutionOverall = airPollutionRootQuery.getAirPollutionOverall();
     }
 }

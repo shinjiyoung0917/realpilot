@@ -45,7 +45,7 @@ public class WeatherDao<T> {
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
         String dateQueryString = dateDao.getDateQueryString(DateUnit.HOUR, var, dateMap, Query.HOURLY_WEATHER);
-        String fullQueryString = queryWithGridAndDate(dateQueryString, Query.HOURLY_WEATHER.getRootQuery(), Query.HOURLY_WEATHER.getEdge());
+        String fullQueryString = queryWithRegionUidAndDate(dateQueryString, Query.HOURLY_WEATHER.getRootQuery(), Query.HOURLY_WEATHER.getEdge());
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
@@ -53,7 +53,7 @@ public class WeatherDao<T> {
         return weatherRootQuery;
     }
 
-    private String queryWithGridAndDate(String dateQueryString, String weatherRootQuery, String weatherEdge) {
+    private String queryWithRegionUidAndDate(String dateQueryString, String weatherRootQuery, String weatherEdge) {
         String fullQueryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
                 " region(func: uid($id)) {\n" +
                 "    uid\n" +
@@ -147,6 +147,7 @@ public class WeatherDao<T> {
     }
 
     public WeatherRootQuery getAlreadyExistingWeatherNodeWithRegionNameAndDate(String sidoName, String sggName, String umdName, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
+        // TODO; 서비스에서 하도록
         Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
         String fullQueryString = "";

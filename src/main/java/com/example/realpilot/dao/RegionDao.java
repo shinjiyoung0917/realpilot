@@ -1,12 +1,11 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
-import com.example.realpilot.excelModel.RegionData;
 import com.example.realpilot.model.region.*;
+import com.example.realpilot.utilAndConfig.CountryList;
 import com.google.gson.Gson;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphProto;
-import io.dgraph.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 
 @Repository
-public class RegionDao {
+public class RegionDao<T> {
     private static final Logger log = LoggerFactory.getLogger(RegionDao.class);
 
     @Autowired
@@ -26,9 +25,14 @@ public class RegionDao {
     private Gson gson = new Gson();
 
     public void createRegionNode(Map<String, Regions> regionMap) {
+        Country korea = new Country();
         Sido prevSavedSido = new Sido();
         Sigungu prevSavedSigungu = new Sigungu();
-        Regions newRegion = new Regions();
+
+        Optional<Country> optionalKorea = getCountryNodeWithName(CountryList.KOREA.getCountryName());
+        if(optionalKorea.isPresent()) {
+            korea = optionalKorea.get();
+        }
 
         // TODO: model로 옮기기
         for(String regionName: regionMap.keySet()) {
@@ -43,7 +47,7 @@ public class RegionDao {
                 }
                 Sido sido = new Sido();
                 prevSavedSido = sido.setSido(region);
-                newRegion.getSidos().add(prevSavedSido);
+                korea.getSidos().add(prevSavedSido);
             } else if(!region.getSggName().equals("") && region.getUmdName().equals("")) {
                 if(optionalRegion.isPresent()) {
                     List<Sigungu> sigunguList = optionalRegion.get().getSigungus();
@@ -76,8 +80,32 @@ public class RegionDao {
                 eubmyeondong.setEubmyeondong(prevSavedSigungu, region);
             }
         }
+        korea.setCountry(korea, CountryList.KOREA);
 
-        operations.mutate(dgraphClient.newTransaction(), newRegion);
+        operations.mutate(dgraphClient.newTransaction(), korea);
+    }
+
+    public Optional<Country> getCountryNodeWithName(String countryName) {
+        String fullQueryString = "query country($countryName: string) {\n" +
+                "  country(func: eq(countryName, $countryName)) {\n" +
+                "    uid\n" +
+                "    countryName\n" +
+                "  }\n" +
+                "}\n";
+
+        Map<String, String> var  = new LinkedHashMap<>();
+        var.put("$countryName", countryName);
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        List<Country> countryResult =  regionRootQuery.getCountry();
+
+        Optional<Country> result = Optional.empty();
+        if(Optional.ofNullable(countryResult).isPresent() && !countryResult.isEmpty()) {
+            result = Optional.of(countryResult.get(0));
+        }
+
+        return result;
     }
 
     public Optional<Regions> getRegionNodeWithName(String sidoName, String sggName, String umdName) {
@@ -135,6 +163,52 @@ public class RegionDao {
 
         // TODO: Optional로 변경
         return regionResult;
+    }
+
+    public Optional<List<Regions>> getRegionNodeWithMeasureStation(String stationName) {
+        String fullQueryString = "query region($measureStationName: string) {\n" +
+                " region(func: eq(measureStationName, $measureStationName)) {\n" +
+                "    uid\n" +
+                "    sidoName\n" +
+                "    sggName\n" +
+                "    umdName\n" +
+                "    measureStationName\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var  = new LinkedHashMap<>();
+        var.put("$measureStationName", String.valueOf(stationName));
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        List<Regions> regionResult =  regionRootQuery.getRegion();
+
+        Optional<List<Regions>> result = Optional.empty();
+        if(Optional.ofNullable(regionResult).isPresent() && !regionResult.isEmpty()) {
+            result = Optional.of(regionResult);
+        }
+
+        return result;
+    }
+
+    public Optional<List<Regions>> getSidoNode() {
+        String fullQueryString = "{\n" +
+                "  region(func: has(sidoName)) {\n" +
+                "    uid\n" +
+                "    sidoName\n" +
+                "  }\n" +
+                "}";
+
+        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        List<Regions> regionResult =  regionRootQuery.getRegion();
+
+        Optional<List<Regions>> result = Optional.empty();
+        if(Optional.ofNullable(regionResult).isPresent() && !regionResult.isEmpty()) {
+            result = Optional.of(regionResult);
+        }
+
+        return result;
     }
 
     public Optional<Set<Regions>> getGridList() {
@@ -200,7 +274,7 @@ public class RegionDao {
         return result;
     }
 
-   public void updateRegionNode(Regions region) {
+   public void updateRegionNode(T region) {
         operations.mutate(dgraphClient.newTransaction(), region);
     }
 }

@@ -2,6 +2,7 @@ package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
+import com.example.realpilot.model.airPollution.AirPollutionOverall;
 import com.example.realpilot.model.airPollution.AirPollutionRootQuery;
 import com.example.realpilot.utilAndConfig.DateUnit;
 import com.example.realpilot.utilAndConfig.Query;
@@ -32,12 +33,12 @@ public class AirPollutionDao<T> {
     @Autowired
     private Gson gson = new Gson();
 
-    public AirPollutionRootQuery getAlreadyExistingAirPollutionDeatailNodeWithMeasureStationInfoAndDate(String measureStationName, Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
+   /* public AirPollutionRootQuery getAlreadyExistingAirPollutionDetailNodeWithRegionUidAndDate(String uid, Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
         String rootQuery = query.getRootQuery();
         String edge = query.getEdge();
 
         Map<String, String> var = new LinkedHashMap<>();
-        var.put("$measureStationName", measureStationName);
+        var.put("$id", uid);
         // TODO: 날짜, 시간 파라미터 설정하는 로직 중복 해결하기
         var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
@@ -45,7 +46,31 @@ public class AirPollutionDao<T> {
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
         String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, Query.AIR_POLLUTION_DETAIL);
-        String fullQueryString = queryWithMeasureStationInfoAndDate(dateQueryString, rootQuery, edge);
+        String fullQueryString = queryWithRegionUidAndDate(dateQueryString, rootQuery, edge);
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+        AirPollutionRootQuery airPollutionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), AirPollutionRootQuery.class);
+
+        return airPollutionRootQuery;
+    }*/
+
+    public AirPollutionRootQuery getAlreadyExistingAirPollutionNodeWithRegionUidAndDate(String uid, Map<DateUnit, Integer> dateMap, String airPollutionCode, DateUnit dateUnit, Query query) {
+        String rootQuery = query.getRootQuery();
+        String edge = query.getEdge();
+
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$id", uid);
+        // TODO: 날짜, 시간 파라미터 설정하는 로직 중복 해결하기
+        var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
+        var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
+        var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
+        if(dateUnit.equals(DateUnit.HOUR)) {
+            var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
+        }
+        var.put("$airPollutionCode", airPollutionCode);
+
+        String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
+        String fullQueryString = queryWithRegionUidAndDate(dateQueryString, rootQuery, edge);
 
         DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
         AirPollutionRootQuery airPollutionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), AirPollutionRootQuery.class);
@@ -53,14 +78,40 @@ public class AirPollutionDao<T> {
         return airPollutionRootQuery;
     }
 
-    public String queryWithMeasureStationInfoAndDate(String dateQueryString, String airPollutionRootQuery, String airPollutionEdge) {
-        String fullQueryString = "query region($measureStationName: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
-                " region(func: eq(measureStationName, $measureStationName)) {\n" +
+   /* public String queryWithRegionUidAndDate(String dateQueryString, String airPollutionRootQuery, String airPollutionEdge) {
+        String fullQueryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int) {\n" +
+                " region(func: uid($id)) {\n" +
                 "    uid\n" +
                 "    sidoName\n" +
                 "    sggName\n" +
                 "    umdName\n" +
                 "    var1 as " + airPollutionEdge + " {\n" +
+                "      uid\n" +
+                "    }\n" +
+                "  }\n" +
+                "    \n" +
+                dateQueryString +
+                "    \n" +
+                "  " + airPollutionRootQuery + "(func: uid(var1)) @filter(uid(var2)) {\n" +
+                "    uid\n" +
+                "    expand(_all_)\n" +
+                "  }\n" +
+                "}";
+
+        return fullQueryString;
+    }
+*/
+    public String queryWithRegionUidAndDate(String dateQueryString, String airPollutionRootQuery, String airPollutionEdge) {
+        String fullQueryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int, $airPollutionCode: string) {\n" +
+                " region(func: uid($id)) {\n" +
+                "    uid\n" +
+                "    sidoName\n" +
+                "    sggName\n" +
+                "    umdName\n";
+        if(airPollutionRootQuery.equals(Query.AIR_POLLUTION_OVERALL.getRootQuery())) {
+            fullQueryString += "    var1 as " + airPollutionEdge + " @filter(eq(airPollutionCode, $airPollutionCode)) {\n";
+        }
+        fullQueryString +=
                 "      uid\n" +
                 "    }\n" +
                 "  }\n" +
@@ -115,7 +166,54 @@ public class AirPollutionDao<T> {
         return res;
     }
 
+    public Optional<AirPollutionOverall> getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(String uid, String date, String time, String airPollutionCode) {
+        DgraphProto.Response res;
+
+        res = queryForAirPollutionForecastOverall(uid, date, time, airPollutionCode);
+
+        AirPollutionRootQuery airPollutionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), AirPollutionRootQuery.class);
+        List<AirPollutionOverall> airPollutionOverallResult =  airPollutionRootQuery.getAirPollutionOverall();
+
+        Optional<AirPollutionOverall> result = Optional.empty();
+        if(Optional.ofNullable(airPollutionOverallResult).isPresent() && !airPollutionOverallResult.isEmpty()) {
+            List<AirPollutionOverall> airPollutionOverallList = airPollutionOverallResult.get(0).getAirPollutionOveralls();
+            if(Optional.ofNullable(airPollutionOverallList).isPresent() && !airPollutionOverallList.isEmpty()) {
+                result = Optional.of(airPollutionOverallList.get(0));
+            }
+        }
+
+        return result;
+    }
+
+    private DgraphProto.Response queryForAirPollutionForecastOverall(String uid, String date, String time, String airPollutionCode) {
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$id", uid);
+        var.put("$date", date);
+        var.put("$airPollutionCode", airPollutionCode);
+
+        String fullQueryString = "query airPollutionOverall($id: string, $date: string, $time: string, $airPollutionCode: string) {\n" +
+                " airPollutionOverall(func: uid($id)) {\n" +
+                "    airPollutionOveralls @filter(eq(date, $date) ";
+        if(!time.equals("")) {
+            var.put("$time", time);
+            fullQueryString += "and eq(time, $time) ";
+        }
+        fullQueryString += " and eq(airPollutionCode, $airPollutionCode)) {\n" +
+                "      uid\n" +
+                "      expand(_all_)\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+
+        return res;
+    }
+
+
     public void updateAirPollutionNode(T airPollution) {
         operations.mutate(dgraphClient.newTransaction(), airPollution);
     }
+
+
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 @Data
 public class RegionRootQuery {
     private List<Regions> region;
+    private List<Country> country;
     private Set<Regions> grid;
     private Set<Regions> tmCoordinate;
     private Set<Regions> measureStationInfo;

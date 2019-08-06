@@ -38,6 +38,13 @@ public class DateService {
         return date;
     }
 
+    public String makeCurrentDateFormatWithBar() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String date = dateFormat.format(new Date());
+
+        return date;
+    }
+
     public String makeCurrentTimeFormat(ExternalWeatherApi api) {
         String hourString = makeCurrentHourFormat(api);
         String minuteString = makeCurrentMinuteFormat(api);
@@ -103,23 +110,23 @@ public class DateService {
         return dateMap;
     }
 
-    public Map<DateUnit, Integer> getFcstDate(String fcstDate, String fcstTime) {
+    public Map<DateUnit, Integer> splitDateAndTime(String date, String time) {
         Map<DateUnit, Integer> dateMap = new HashMap<>();
 
-        dateMap.put(DateUnit.YEAR, Integer.parseInt(fcstDate.substring(0, 4)));
-        dateMap.put(DateUnit.MONTH, Integer.parseInt(fcstDate.substring(4, 6)));
-        dateMap.put(DateUnit.DAY, Integer.parseInt(fcstDate.substring(6, 8)));
-        dateMap.put(DateUnit.HOUR, Integer.parseInt(fcstTime.substring(0, 2)));
+        dateMap.put(DateUnit.YEAR, Integer.parseInt(date.substring(0, 4)));
+        dateMap.put(DateUnit.MONTH, Integer.parseInt(date.substring(4, 6)));
+        dateMap.put(DateUnit.DAY, Integer.parseInt(date.substring(6, 8)));
+        dateMap.put(DateUnit.HOUR, Integer.parseInt(time.substring(0, 2)));
 
         return dateMap;
     }
 
-    public Map<DateUnit, Integer> getTmDate(String tm) {
+    public Map<DateUnit, Integer> splitDateIncludingDelim(String date) {
         Map<DateUnit, Integer> dateMap = new HashMap<>();
 
-        dateMap.put(DateUnit.YEAR, Integer.parseInt(tm.substring(0, 4)));
-        dateMap.put(DateUnit.MONTH, Integer.parseInt(tm.substring(5, 7)));
-        dateMap.put(DateUnit.DAY, Integer.parseInt(tm.substring(8, 10)));
+        dateMap.put(DateUnit.YEAR, Integer.parseInt(date.substring(0, 4)));
+        dateMap.put(DateUnit.MONTH, Integer.parseInt(date.substring(5, 7)));
+        dateMap.put(DateUnit.DAY, Integer.parseInt(date.substring(8, 10)));
 
         return dateMap;
     }

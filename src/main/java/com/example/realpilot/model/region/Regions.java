@@ -1,8 +1,8 @@
 package com.example.realpilot.model.region;
 
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
-import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
+import com.example.realpilot.model.airPollution.AirPollutionOverall;
 import com.example.realpilot.model.weather.AmWeather;
 import com.example.realpilot.model.weather.DailyWeather;
 import com.example.realpilot.model.weather.HourlyWeather;
@@ -21,6 +21,8 @@ import java.util.Optional;
 public class Regions {
     private String uid;
 
+    private String countryName;
+
     private String hCode;
     private String sidoName;
     private String sggName;
@@ -34,6 +36,7 @@ public class Regions {
     private String measureStationName;
     private String measureStationAddr;
 
+    private List<Country> countries = new ArrayList<>();
     private List<Sido> sidos = new ArrayList<>(); // 연속적으로 한번에 삽입할 때 사용
     private List<Sigungu> sigungus = new ArrayList<>();
     private List<Eubmyeondong> eubmyeondongs = new ArrayList<>();
@@ -42,6 +45,12 @@ public class Regions {
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
     private List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
+    private List<AirPollutionOverall> airPollutionOveralls = new ArrayList<>();
+
+    public void setCountry(Regions country) {
+        this.setUid(country.getUid());
+        this.setCountryName(country.getCountryName());
+    }
 
     public void setRegion(Regions region) {
         this.uid = region.getUid();

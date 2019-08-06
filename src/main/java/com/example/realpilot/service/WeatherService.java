@@ -74,7 +74,7 @@ public class WeatherService<T> {
     private Integer GRID_Y_INDEX = 1;
 
     // 동네예보 API(초단기실황/초단기예보/동네예보)
-    public void callWeatherApiByGrid() {
+    public void callWeatherApiOfKma() {
         Set<List<Integer>> gridSet = regionService.gridSet;
 
         ForecastGribTopModel forecastGribTopModel = new ForecastGribTopModel();
@@ -156,6 +156,7 @@ public class WeatherService<T> {
             log.info("[Service] callForecastTimeApi - category : " + forecastTime.getCategory());
             log.info("[Service] callForecastTimeApi - value : " + forecastTime.getFcstValue());
 
+            // TODO: index 변수 대신에 현재 시간과 예보 시간의 차이(예보시간-현재시간-1)를 배열의 인덱스로 두어 저장하도록 수정
             fcstDate = forecastTime.getFcstDate();
             if(index % fcstTimeCount ==  0) {
                 categoryValueMapArray[0].put(forecastTime.getCategory(), forecastTime.getFcstValue());
@@ -175,6 +176,7 @@ public class WeatherService<T> {
 
         List<HourlyWeather> hourlyWeatherList = new ArrayList<>();
 
+        // TODO: index 변수 대신에 현재 시간과 예보 시간의 차이(예보시간-현재시간-1)를 배열의 인덱스로 두어 저장하도록 수정
         for(int i=0 ; i < fcstTimeCount ; ++i) {
             HourlyWeather hourlyWeather = new HourlyWeather();
             if(i == 0) {
@@ -191,7 +193,7 @@ public class WeatherService<T> {
 
         for(HourlyWeather hourlyWeather : hourlyWeatherList) {
             String fcstTime = hourlyWeather.getFcstTime();
-            Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
+            Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(fcstDate, fcstTime);
 
             connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionList, hourlyWeather, ExternalWeatherApi.FORECAST_TIME);
         }
@@ -220,7 +222,6 @@ public class WeatherService<T> {
                 hourlyWeather.setHourlyWeather(null, categoryValueMap, baseDate, baseTime, prevFcstDate, prevFcstTime);
                 hourlyWeatherList.add(hourlyWeather);
                 categoryValueMap = new HashMap<>();
-
             } else {
                 categoryValueMap.put(forecastSpace.getCategory(), forecastSpace.getFcstValue());
                 categoryValueMapList.add(categoryValueMap);
@@ -235,7 +236,7 @@ public class WeatherService<T> {
             String fcstDate = hourlyWeather.getFcstDate();
             String fcstTime = hourlyWeather.getFcstTime();
 
-            Map<DateUnit, Integer> dateMap = dateService.getFcstDate(fcstDate, fcstTime);
+            Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(fcstDate, fcstTime);
 
             connectRegionAndHourlyWeatherAndDateNode(dateMap, fcstDate, fcstTime, regionList, hourlyWeather, ExternalWeatherApi.FORECAST_SPACE);
         }
@@ -271,7 +272,7 @@ public class WeatherService<T> {
                         foundHourlyWeather1 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
                     }
 
-                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>(null);
+                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>();
                     foundHourlyWeather1.ifPresent(notNullHourlyWeather -> hourlyWeatherUid.set(notNullHourlyWeather.getUid()));
 
                     hourlyWeather.setUid(hourlyWeatherUid.get());
@@ -289,7 +290,7 @@ public class WeatherService<T> {
                         foundHourlyWeather2 = weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(foundRegion.getUid(), date, time, ExternalWeatherApi.FORECAST_SPACE);
                     }
 
-                    if (Optional.ofNullable(hourNode).isPresent()) {
+                    if (Optional.ofNullable(foundHourlyWeather2).isPresent()) {
                         Optional<HourlyWeather> finalFoundHourlyWeather = foundHourlyWeather2;
                         hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(finalFoundHourlyWeather.get()));
                     }
@@ -389,10 +390,10 @@ public class WeatherService<T> {
                     }
                 } else {
                     for (DayOfDay7 oneDay : area.getDayList()) {
-                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>();
+                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>(Optional.empty());
                         Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                        AtomicReference<String> dailyWeatherUid = new AtomicReference<>(null);
+                        AtomicReference<String> dailyWeatherUid = new AtomicReference<>();
                         foundDailyWeather.get().ifPresent(notNullDailyWeather-> dailyWeatherUid.set(notNullDailyWeather.getUid()));
 
                         newDailyWeather = new DailyWeather();
@@ -404,14 +405,16 @@ public class WeatherService<T> {
                     regionDao.updateRegionNode(foundRegion);
 
                     for (DayOfDay7 oneDay : area.getDayList()) {
-                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>();
+                        AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>(Optional.empty());
                         Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                        Map<DateUnit, Integer> dateMap = dateService.getTmDate(oneDay.getTm());
+                        Map<DateUnit, Integer> dateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                         Optional<Day> dayNode = dateDao.getDayNode(dateMap);
 
-                        dayNode.ifPresent(day -> day.getDailyWeathers().add(foundDailyWeather.get().get()));
-                        dateDao.updateDateNode(dayNode);
+                        if(foundDailyWeather.get().isPresent()) {
+                            dayNode.ifPresent(day -> day.getDailyWeathers().add(foundDailyWeather.get().get()));
+                            dateDao.updateDateNode(dayNode);
+                        }
                         dayNode.ifPresent(day -> log.info("[Service] callKweatherDay7Api - " + day.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료"));
                     }
                 }
@@ -497,7 +500,7 @@ public class WeatherService<T> {
     private void connectRegionAndAmWeatherAndDateNode(AreaOfAmPm7 area, Regions foundRegion, AtomicReference<List<AmWeather>> amWeatherList) {
         AmWeather newAmWeather = new AmWeather();
 
-        if (Optional.ofNullable(amWeatherList).isPresent() && !amWeatherList.get().isEmpty()) {
+        if (Optional.ofNullable(amWeatherList.get()).isPresent() && !amWeatherList.get().isEmpty()) {
             for (DayOfAmPm7 day : area.getDayList()) {
                 AmWeather oldAmWeather = amWeatherList.get().get(0);
                 newAmWeather.setAmWeather(oldAmWeather.getUid(), day);
@@ -505,10 +508,10 @@ public class WeatherService<T> {
             }
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
-                AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>();
+                AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>(Optional.empty());
                 Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                AtomicReference<String> amWeatherUid = new AtomicReference<>(null);
+                AtomicReference<String> amWeatherUid = new AtomicReference<>();
                 foundAmWeather.get().ifPresent(notNullAmWeather-> amWeatherUid.set(notNullAmWeather.getUid()));
 
                 newAmWeather = new AmWeather();
@@ -520,14 +523,16 @@ public class WeatherService<T> {
             regionDao.updateRegionNode(foundRegion);
 
             for (DayOfAmPm7 oneDay : area.getDayList()) {
-                AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>();
+                AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>(Optional.empty());
                 Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                Map<DateUnit, Integer> dateMap = dateService.getTmDate(oneDay.getTm());
+                Map<DateUnit, Integer> dateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                 Optional<Day> dayNode = dateDao.getDayNode(dateMap);
 
-                dayNode.ifPresent(day -> day.getAmWeathers().add(foundAmWeather.get().get()));
-                dateDao.updateDateNode(dayNode);
+                if(foundAmWeather.get().isPresent()) {
+                    dayNode.ifPresent(day -> day.getAmWeathers().add(foundAmWeather.get().get()));
+                    dateDao.updateDateNode(dayNode);
+                }
                 dayNode.ifPresent(day -> log.info("[Service] callKweatherAmPm7Api - " + day.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료"));
             }
         }
@@ -536,7 +541,7 @@ public class WeatherService<T> {
     private void connectRegionAndPmWeatherAndDateNode(AreaOfAmPm7 area, Regions foundRegion, AtomicReference<List<PmWeather>> pmWeatherList) {
         PmWeather newPmWeather = new PmWeather();
 
-        if (Optional.ofNullable(pmWeatherList).isPresent() && !pmWeatherList.get().isEmpty()) {
+        if (Optional.ofNullable(pmWeatherList.get()).isPresent() && !pmWeatherList.get().isEmpty()) {
             for (DayOfAmPm7 day : area.getDayList()) {
                 PmWeather oldPmWeather = pmWeatherList.get().get(0);
                 newPmWeather.setPmWeather(oldPmWeather.getUid(), day);
@@ -544,10 +549,10 @@ public class WeatherService<T> {
             }
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
-                AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>();
+                AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>(Optional.empty());
                 Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                AtomicReference<String> pmWeatherUid = new AtomicReference<>(null);
+                AtomicReference<String> pmWeatherUid = new AtomicReference<>();
                 foundPmWeather.get().ifPresent(notNullPmWeather-> pmWeatherUid.set(notNullPmWeather.getUid()));
 
                 newPmWeather = new PmWeather();
@@ -559,14 +564,16 @@ public class WeatherService<T> {
             regionDao.updateRegionNode(foundRegion);
 
             for (DayOfAmPm7 oneDay : area.getDayList()) {
-                AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>();
+                AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>(Optional.empty());
                 Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
 
-                Map<DateUnit, Integer> dateMap = dateService.getTmDate(oneDay.getTm());
+                Map<DateUnit, Integer> dateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                 Optional<Day> dayNode = dateDao.getDayNode(dateMap);
 
-                dayNode.ifPresent(day -> day.getPmWeathers().add(foundPmWeather.get().get()));
-                dateDao.updateDateNode(dayNode);
+                if(foundPmWeather.get().isPresent()) {
+                    dayNode.ifPresent(day -> day.getPmWeathers().add(foundPmWeather.get().get()));
+                    dateDao.updateDateNode(dayNode);
+                }
                 dayNode.ifPresent(day -> log.info("[Service] callKweatherAmPm7Api - " + day.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료"));
             }
         }
@@ -630,11 +637,11 @@ public class WeatherService<T> {
                     Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
                     String time = dateMap.get(DateUnit.HOUR).toString() + "00";
 
-                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather1 = new AtomicReference<>();
+                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather1 = new AtomicReference<>(Optional.empty());
                     Optional.ofNullable(foundRegion.getUid())
                             .ifPresent(uid -> foundHourlyWeather1.set(weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, area.getTm(), time, ExternalWeatherApi.KWEATHER_SHKO)));
 
-                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>(null);
+                    AtomicReference<String> hourlyWeatherUid = new AtomicReference<>();
                     foundHourlyWeather1.get().ifPresent(notNullHourlyWeather-> hourlyWeatherUid.set(notNullHourlyWeather.getUid()));
 
                     newHourlyWeather = new HourlyWeather();
@@ -644,14 +651,16 @@ public class WeatherService<T> {
 
                     regionDao.updateRegionNode(foundRegion);
 
-                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather2 = new AtomicReference<>();
+                    AtomicReference<Optional<HourlyWeather>> foundHourlyWeather2 = new AtomicReference<>(Optional.empty());
                     Optional.ofNullable(foundRegion.getUid())
                             .ifPresent(uid -> foundHourlyWeather2.set(weatherDao.getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, area.getTm(), time, ExternalWeatherApi.KWEATHER_SHKO)));
 
                     Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
-                    hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(foundHourlyWeather2.get().get()));
-                    dateDao.updateDateNode(hourNode);
+                    if(foundHourlyWeather2.get().isPresent()) {
+                        hourNode.ifPresent(hour -> hour.getHourlyWeathers().add(foundHourlyWeather2.get().get()));
+                        dateDao.updateDateNode(hourNode);
+                    }
                 }
             }
             log.info("[Service] callKweatherShkoApi - [" + area.getCode() + "] " + area.getAreaname1() + area.getAreaname2() + area.getAreaname3() + area.getAreaname4() + " 지역->날씨<-날짜 노드 연결 완료");

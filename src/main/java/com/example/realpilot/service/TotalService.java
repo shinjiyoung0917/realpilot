@@ -44,8 +44,10 @@ public class TotalService {
         //regionService.callTmCoordinateApi();
         //airPollutionService.callNearbyMeasureStationListApi();
         //airPollutionService.callRealTimeAirPollutionInfoApi();
+        airPollutionService.callAirPollutionForecastApi();
+        //airPollutionService.callYellowDustInfoApi();
 
-        weatherService.callWeatherApiByGrid();
+        //weatherService.callWeatherApiOfKma();
         //weatherService.callWeatherApiOfKweather();
         //weatherService.callWeatherWarningApi();
     }

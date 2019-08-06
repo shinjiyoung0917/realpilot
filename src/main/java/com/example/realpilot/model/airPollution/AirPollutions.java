@@ -11,14 +11,21 @@ public class AirPollutions {
 
     private String date;
     private String time;
-    private Float o3Value;
-    private Float pm10Value;
-    private Float pm25Value;
-    private Integer o3Grade;
-    private Integer pm10Grade;
-    private Integer pm25Grade;
-    private Integer pm10Grade1h;
-    private Integer pm25Grade1h;
+    private Float ozoneValue;
+    private Float fineDustValue;
+    private Float ultraFineDustValue;
+    private Integer ozoneGrade;
+    private Integer fineDustGrade;
+    private Integer ultraFineDustGrade;
+    private Integer fineDustGradeFor1h;
+    private Integer ultraFineDustGradeFor1h;
 
-    List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
+    private String airPollutionCode;
+    private String airPollutionOverall;
+    private String airPollutionCause;
+    private String airPollutionGrade;
+    private String actionKnack;
+
+    private List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
+    private List<AirPollutionOverall> airPollutionOveralls = new ArrayList<>();
 }
