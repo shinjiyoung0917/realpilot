@@ -8,8 +8,8 @@ public class AirPollutionDetail extends AirPollutions {
     public void setAirPollutionDetail(String uid, RealTimeAirPollutionInfo airPollutionInfo) {
         this.setUid(uid);
         String dateAndTime = airPollutionInfo.getDataTime().replaceAll("-|:", "");
-        this.setDate(dateAndTime.substring(0, 8));
-        this.setTime(dateAndTime.substring(9, 13));
+        this.setForecastDate(dateAndTime.substring(0, 8));
+        this.setForecastTime(dateAndTime.substring(9, 13));
         if(!airPollutionInfo.getO3Value().equals("-") && !airPollutionInfo.getO3Value().equals("")) {
             this.setOzoneValue(Float.parseFloat(airPollutionInfo.getO3Value()));
         }

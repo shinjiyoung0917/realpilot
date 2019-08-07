@@ -9,6 +9,8 @@ import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMea
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationListTopModel;
 import com.example.realpilot.externalApiModel.realTimeAirPollutionInfo.RealTimeAirPollutionInfo;
 import com.example.realpilot.externalApiModel.realTimeAirPollutionInfo.RealTimeAirPollutionInfoTopModel;
+import com.example.realpilot.externalApiModel.yellowDustInfo.YellowDustInfo;
+import com.example.realpilot.externalApiModel.yellowDustInfo.YellowDustInfoTopModel;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.airPollution.AirPollutionOverall;
 import com.example.realpilot.model.airPollution.AirPollutionRootQuery;
@@ -26,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.swing.text.html.Option;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +56,10 @@ public class AirPollutionService {
     private String realTimeAirPollutionInfoApiUrl;
     @Value("${airPollutionForecast.api.url}")
     private String airPollutionForecastApiUrl;
+    @Value("${sidoRealTimeAverageAirPollutionInfo.api.url}")
+    private String sidoRealTimeAverageAirPollutionInfoApiUrl;
+    @Value("${yellowDustInfo.api.url}")
+    private String yellowDustInfoApiUrl;
 
     public void callNearbyMeasureStationListApi() {
         NearbyMeasureStationListTopModel nearbyMeasureStationListTopModel = new NearbyMeasureStationListTopModel();
@@ -189,8 +194,8 @@ public class AirPollutionService {
         List<AirPollutionForecastOverall> airPollutionForecastOverallList = airPollutionForecastOverallTopModel.getList();
 
         if(Optional.ofNullable(airPollutionForecastOverallList).isPresent() && !airPollutionForecastOverallList.isEmpty()) {
-            String[] baseDateArray = airPollutionForecastOverallList.get(0).getDataTime().split(" ", 2);
-            Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(baseDateArray[0].replaceAll("-", ""), baseDateArray[1]);
+            String[] releaseDateArray = airPollutionForecastOverallList.get(0).getDataTime().split(" ", 2);
+            Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(releaseDateArray[0].replaceAll("-", ""), releaseDateArray[1]);
             parseAirPollutionForecastOverall(airPollutionForecastOverallList, dateMap);
         }
     }
@@ -286,6 +291,20 @@ public class AirPollutionService {
     }
 
     public void callYellowDustInfoApi() {
+        YellowDustInfoTopModel yellowDustInfoTopModel = new YellowDustInfoTopModel();
 
+        URI uri = URI.create(yellowDustInfoApiUrl + "?ServiceKey=" + serviceKey + "&_returnType=json");
+
+        try {
+            yellowDustInfoTopModel = restTemplate.getForObject(uri, YellowDustInfoTopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        List<YellowDustInfo> yellowDustInfoList = yellowDustInfoTopModel.getList();
+
+        if(Optional.ofNullable(yellowDustInfoList).isPresent() && !yellowDustInfoList.isEmpty()) {
+
+        }
     }
 }

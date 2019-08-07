@@ -80,8 +80,11 @@ public class DateService {
     }
 
     public String makeCurrentMinuteFormat(ExternalWeatherApi api) {
-        Calendar calendar = Calendar.getInstance();
-        int minute = calendar.get(Calendar.MINUTE);
+        int minute = 0;
+        if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+            Calendar calendar = Calendar.getInstance();
+            minute = calendar.get(Calendar.MINUTE);
+        }
 
         return convertToDoubleDigit(minute);
     }

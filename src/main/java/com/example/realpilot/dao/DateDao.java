@@ -178,10 +178,10 @@ public class DateDao<T> {
         String dateQueryString = "";
         switch (dateUnit) {
             case DAY:
-                dateQueryString = queryWithDay(rootQuery.getEdge());
+                dateQueryString = queryStringWithDay(rootQuery.getEdge());
                 break;
             case HOUR:
-                dateQueryString = queryWithHour(rootQuery.getEdge());
+                dateQueryString = queryStringWithHour(rootQuery.getEdge());
                 var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
                 break;
         }
@@ -189,7 +189,7 @@ public class DateDao<T> {
         return dateQueryString;
     }
 
-    private String queryWithHour(String edge) {
+    private String queryStringWithHour(String edge) {
         String queryString =
                 "  date(func: eq(year, $year)) {\n" +
                         "    year\n" +
@@ -211,7 +211,7 @@ public class DateDao<T> {
         return queryString;
     }
 
-    private String queryWithDay(String edge) {
+    private String queryStringWithDay(String edge) {
         String queryString =
                 "  date(func: eq(year, $year)) {\n" +
                         "    year\n" +

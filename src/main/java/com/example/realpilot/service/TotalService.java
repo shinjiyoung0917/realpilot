@@ -1,6 +1,5 @@
 package com.example.realpilot.service;
 
-import com.example.realpilot.dao.RegionDao;
 import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,31 +24,28 @@ public class TotalService {
     private AirPollutionService airPollutionService;
 
     @Autowired
-    private RegionDao regionDao;
-
-    @Autowired
     private RestTemplate restTemplate;
 
     @PostConstruct
     private void totalFlow() throws IOException {
-        //regionService.doForAddressCodeFile();
-        //regionService.doForGridFile();
+        /*regionService.doForAddressCodeFile();
+        regionService.doForGridFile();
 
-        //regionService.addRegionNode();
-        //regionService.printRegionData();
-        //dateService.addDateNode();
-
+        regionService.addRegionNode();
+        regionService.printRegionData();
+        dateService.addDateNode();
+*/
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
-        //regionService.callTmCoordinateApi();
-        //airPollutionService.callNearbyMeasureStationListApi();
-        //airPollutionService.callRealTimeAirPollutionInfoApi();
+      /*  regionService.callTmCoordinateApi();
+        airPollutionService.callNearbyMeasureStationListApi();
+        airPollutionService.callRealTimeAirPollutionInfoApi();
         airPollutionService.callAirPollutionForecastApi();
-        //airPollutionService.callYellowDustInfoApi();
+        airPollutionService.callYellowDustInfoApi();
+        weatherService.callSpecialWeatherReportApi();*/
 
-        //weatherService.callWeatherApiOfKma();
+        weatherService.callWeatherApiOfKma();
         //weatherService.callWeatherApiOfKweather();
-        //weatherService.callWeatherWarningApi();
     }
 
 }

@@ -159,8 +159,6 @@ public class RegionService {
     }
 
     public void callTmCoordinateApi() {
-        //restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
-
         TmCoordinateTopModel tmCoordinateTopModel = new TmCoordinateTopModel();
 
         for(SidoList sido : SidoList.values()) {
@@ -180,8 +178,8 @@ public class RegionService {
                 e.printStackTrace();
             }
 
-            for(TmCoordinate tm : tmCoordinateTopModel.getList()) {
-                Optional<Regions> optionalRegion = regionDao.getRegionNodeWithName(tm.getSidoName(), tm.getSggName(), tm.getUmdName());
+            for(TmCoordinate tmCoordinate : tmCoordinateTopModel.getList()) {
+                Optional<Regions> optionalRegion = regionDao.getRegionNodeWithName(tmCoordinate.getSidoName(), tmCoordinate.getSggName(), tmCoordinate.getUmdName());
                 Regions region = new Regions();
 
                 if(optionalRegion.isPresent()) {
@@ -190,7 +188,7 @@ public class RegionService {
                     if(Optional.ofNullable(sigunguList).isPresent() && !sigunguList.isEmpty()) {
                         List<Eubmyeondong> eubmyeondongList = sigunguList.get(0).getEubmyeondongs();
                         if(Optional.ofNullable(eubmyeondongList).isPresent() && !eubmyeondongList.isEmpty()) {
-                            eubmyeondongList.get(0).setEubmyeondongByTmCoord(tm);
+                            eubmyeondongList.get(0).setEubmyeondongByTmCoord(tmCoordinate);
                             region.setRegion(eubmyeondongList.get(0));
                         }
                     }

@@ -1,6 +1,5 @@
 package com.example.realpilot.model.weather;
 
-import com.example.realpilot.model.date.Month;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -12,10 +11,14 @@ public class Weathers {
 
     // TODO: HourlyWeather, DailyWeather, AmWeather, PmWeather에서 날짜, 시간 관련된 필드들 date, time으로 맞추기
     // TODO: 케이웨더와 동네예보 API 데이터에서 발표시각과 예보시간을 어떤 필드로 사용할지?
-    private String baseDate;
+    /*private String baseDate;
     private String baseTime;
     private String fcstDate;
-    private String fcstTime;
+    private String fcstTime;*/
+    private String releaseDate;
+    private String releaseTime;
+    private String forecastDate;
+    private String forecastTime;
 
     // TODO: 이름 변경
     private Float POP;
@@ -38,8 +41,6 @@ public class Weathers {
 
     private Float LGT;
 
-    private String tm;
-    private Integer tfh;
     private String tmyo;
     private String icon;
     private String wtext;
@@ -61,16 +62,13 @@ public class Weathers {
     private Float temp;
     private String icon40a;
 
-    private String sidoName;
-    private String sggName;
-    private String umdName;
-
-    private Integer year;
-    private List<Month> months;
+    private String areaOfSpecialWeather;
+    private String currentStatusSpecialWeather;
 
     private List<HourlyWeather> hourlyWeathers = new ArrayList<>();
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
+    private List<SpecialWeather> specialWeathers = new ArrayList<>();
 
 }

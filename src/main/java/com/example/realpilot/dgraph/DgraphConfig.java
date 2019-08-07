@@ -1,6 +1,5 @@
 package com.example.realpilot.dgraph;
 
-import com.example.realpilot.utilAndConfig.WxMappingJackson2HttpMessageConverter;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphGrpc;
 import io.dgraph.DgraphProto;
@@ -57,7 +56,7 @@ public class DgraphConfig {
         // TODO: Dgraph 새로 사용될 떄 이전에 비정상적으로 종료됐는지 확인해야하는지?
 
         // ** DB ALTER ** //
-        // TODO: 필요할 때만 사용 (ex. 잘못된 데이터 삽입했을 경우)
+        // TODO: 필요할 때만 사용
         //dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
 
         String schema = "year: int @index(int) .\n" +
@@ -76,13 +75,10 @@ public class DgraphConfig {
                 "tmY: float @index(float) .\n" +
                 "measureStationName: string @index(fulltext) .\n" +
                 "airPollutionCode: string @index(fulltext) .\n" +
-                "baseDate: string @index(fulltext) .\n" +
-                "baseTime: string @index(fulltext) .\n" +
-                "fcstDate: string @index(fulltext) .\n" +
-                "fcstTime: string @index(fulltext) .\n" +
-                "tm: string @index(fulltext) .\n" +
-                "date: string @index(fulltext) .\n" +
-                "time: string @index(fulltext) .\n" +
+                "releaseDate: string @index(fulltext) .\n" +
+                "releaseTime: string @index(fulltext) .\n" +
+                "forecastDate: string @index(fulltext) .\n" +
+                "forecastTime: string @index(fulltext) .\n" +
                 "hourlyWeathers: uid @reverse .\n" +
                 "dailyWeathers: uid @reverse .\n" +
                 "amWeathers: uid @reverse .\n" +

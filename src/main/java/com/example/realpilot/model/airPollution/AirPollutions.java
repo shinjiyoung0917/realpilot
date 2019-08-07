@@ -9,8 +9,11 @@ import java.util.List;
 public class AirPollutions {
     private String uid;
 
-    private String date;
-    private String time;
+    private String releaseDate;
+    private String releaseTime;
+    private String forecastDate;
+    private String forecastTime;
+
     private Float ozoneValue;
     private Float fineDustValue;
     private Float ultraFineDustValue;
