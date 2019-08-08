@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Data
 public class HourlyWeather extends Weathers {
-    public void setHourlyWeather(String uid, Map<String, Float> categoryValueMap, String forecastDate, String forecastTime) {
+    public void setHourlyWeather(String uid, Map<String, String> categoryValueMap, String forecastDate, String forecastTime) {
         this.setUid(uid);
         this.setReleaseDate(forecastDate);
         this.setReleaseTime(forecastTime);
@@ -19,7 +19,7 @@ public class HourlyWeather extends Weathers {
         setCategoryValue(categoryValueMap);
     }
 
-    public void setHourlyWeather(String uid, Map<String, Float> categoryValueMap, String releaseDate, String releaseTime, String forecastDate, String forecastTime) {
+    public void setHourlyWeather(String uid, Map<String, String> categoryValueMap, String releaseDate, String releaseTime, String forecastDate, String forecastTime) {
         this.setUid(uid);
         this.setReleaseDate(releaseDate);
         this.setReleaseDate(releaseTime);
@@ -40,59 +40,60 @@ public class HourlyWeather extends Weathers {
         this.setForecastTime(currentTime);
     }
 
-    public void setCategoryValue(Map<String, Float> categoryValueMap) {
-        for(Map.Entry<String, Float> entry : categoryValueMap.entrySet()) {
+    public void setCategoryValue(Map<String, String> categoryValueMap) {
+        for(Map.Entry<String, String> entry : categoryValueMap.entrySet()) {
+            if(!entry.getKey().equals("-") && !entry.getKey().equals("") && !entry.getKey().equals(" "))
             switch (entry.getKey()) {
                 case "POP":
-                    this.setPOP(entry.getValue());
+                    this.setPOP(Float.parseFloat(entry.getValue()));
                     break;
                 case "PTY":
-                    this.setPTY(entry.getValue());
+                    this.setPTY(Float.parseFloat(entry.getValue()));
                     break;
                 case "R06":
-                    this.setR06(entry.getValue());
+                    this.setR06(Float.parseFloat(entry.getValue()));
                     break;
                 case "REH":
-                    this.setREH(entry.getValue());
+                    this.setREH(Float.parseFloat(entry.getValue()));
                     break;
                 case "S06":
-                    this.setS06(entry.getValue());
+                    this.setS06(Float.parseFloat(entry.getValue()));
                     break;
                 case "SKY":
-                    this.setSKY(entry.getValue());
+                    this.setSKY(Float.parseFloat(entry.getValue()));
                     break;
                 case "T3H":
-                    this.setT3H(entry.getValue());
+                    this.setT3H(Float.parseFloat(entry.getValue()));
                     break;
                 case "TMN":
-                    this.setTMN(entry.getValue());
+                    this.setTMN(Float.parseFloat(entry.getValue()));
                     break;
                 case "TMX":
-                    this.setTMX(entry.getValue());
+                    this.setTMX(Float.parseFloat(entry.getValue()));
                     break;
                 case "UUU":
-                    this.setUUU(entry.getValue());
+                    this.setUUU(Float.parseFloat(entry.getValue()));
                     break;
                 case "VVV":
-                    this.setVVV(entry.getValue());
+                    this.setVVV(Float.parseFloat(entry.getValue()));
                     break;
                 case "WAV":
-                    this.setWAV(entry.getValue());
+                    this.setWAV(Float.parseFloat(entry.getValue()));
                     break;
                 case "VEC":
-                    this.setVEC(entry.getValue());
+                    this.setVEC(Float.parseFloat(entry.getValue()));
                     break;
                 case "WSD":
-                    this.setWSD(entry.getValue());
+                    this.setWSD(Float.parseFloat(entry.getValue()));
                     break;
                 case "T1H":
-                    this.setT1H(entry.getValue());
+                    this.setT1H(Float.parseFloat(entry.getValue()));
                     break;
                 case "RN1":
-                    this.setRN1(entry.getValue());
+                    this.setRN1(Float.parseFloat(entry.getValue()));
                     break;
                 case "LGT":
-                    this.setLGT(entry.getValue());
+                    this.setLGT(Float.parseFloat(entry.getValue()));
                     break;
             }
         }

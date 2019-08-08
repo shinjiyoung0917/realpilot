@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ForecastGribTopModel {
-    private Response response;
+    private ForecastGribResponse response;
 }

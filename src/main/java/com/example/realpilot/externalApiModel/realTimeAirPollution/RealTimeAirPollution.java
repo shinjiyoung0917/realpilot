@@ -1,11 +1,11 @@
-package com.example.realpilot.externalApiModel.realTimeAirPollutionInfo;
+package com.example.realpilot.externalApiModel.realTimeAirPollution;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RealTimeAirPollutionInfo {
+public class RealTimeAirPollution {
     private String dataTime;
     private String mangName;
     private String o3Value;

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SpecialWeatherReport {
+public class SpecialWeatherInfo {
     private String tmFc;
     private String t1;
     private String t2;

@@ -22,6 +22,8 @@ public class TotalService {
     private WeatherService weatherService;
     @Autowired
     private AirPollutionService airPollutionService;
+    @Autowired
+    private DisasterService disasterService;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -37,15 +39,15 @@ public class TotalService {
 */
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
-      /*  regionService.callTmCoordinateApi();
-        airPollutionService.callNearbyMeasureStationListApi();
-        airPollutionService.callRealTimeAirPollutionInfoApi();
-        airPollutionService.callAirPollutionForecastApi();
-        airPollutionService.callYellowDustInfoApi();
-        weatherService.callSpecialWeatherReportApi();*/
+        //regionService.callTmCoordinateApi();
+        //airPollutionService.callNearbyMeasureStationListApi();
+        //airPollutionService.callRealTimeAirPollutionApi();
+        //airPollutionService.callAirPollutionForecastApi();
+        //weatherService.callSpecialWeatherApi();
+        disasterService.callEarthquakeApi();
 
-        weatherService.callWeatherApiOfKma();
-        //weatherService.callWeatherApiOfKweather();
+        //weatherService.callWeatherApiOfKma();
+        weatherService.callWeatherApiOfKweather();
     }
 
 }

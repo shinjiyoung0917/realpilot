@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SpecialWeatherReportTopModel {
-    private Response response;
+public class SpecialWeatherInfoResponse {
+    private SpecialWeatherInfoBody body;
 }

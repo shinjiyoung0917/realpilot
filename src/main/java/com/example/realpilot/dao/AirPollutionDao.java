@@ -88,7 +88,7 @@ public class AirPollutionDao<T> {
     public Optional<AirPollutionDetail> getAirPollutionDetailNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate, String forecastTime) {
         DgraphProto.Response res;
 
-        res = queryForRealTimeAirPollutionInfo(uid, forecastDate, forecastTime);
+        res = queryForRealTimeAirPollution(uid, forecastDate, forecastTime);
 
         AirPollutionRootQuery airPollutionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), AirPollutionRootQuery.class);
         List<AirPollutionDetail> airPollutionDetailResult =  airPollutionRootQuery.getAirPollutionDetail();
@@ -104,7 +104,7 @@ public class AirPollutionDao<T> {
         return result;
     }
 
-    public DgraphProto.Response queryForRealTimeAirPollutionInfo(String uid, String forecastDate, String forecastTime) {
+    public DgraphProto.Response queryForRealTimeAirPollution(String uid, String forecastDate, String forecastTime) {
         String fullQueryString = "query airPollutionDetail($id: string, $forecastDate: string, $forecastTime: string) {\n" +
                 " airPollutionDetail(func: uid($id)) {\n" +
                 "    airPollutionDetails @filter(eq(forecastDate, $forecastDate) and eq(forecastTime, $forecastTime)) {\n" +

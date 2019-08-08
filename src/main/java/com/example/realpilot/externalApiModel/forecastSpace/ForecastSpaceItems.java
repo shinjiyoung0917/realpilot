@@ -1,4 +1,4 @@
-package com.example.realpilot.externalApiModel.yellowDustInfo;
+package com.example.realpilot.externalApiModel.forecastSpace;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class YellowDustInfoTopModel {
-    private List<YellowDustInfo> list;
+public class ForecastSpaceItems {
+    private List<ForecastSpace> item;
 }

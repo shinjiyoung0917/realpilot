@@ -10,7 +10,8 @@ public enum Query {
     PM_WEATHER("pmWeather", "pmWeathers"),
     AIR_POLLUTION_DETAIL("airPollutionDetail", "airPollutionDetails"),
     AIR_POLLUTION_OVERALL("airPollutionOverall", "airPollutionOveralls"),
-    SPECIAL_WEATHER("specialWeather", "specialWeathers");
+    SPECIAL_WEATHER("specialWeather", "specialWeathers"),
+    EARTHQUAKE("earthquake", "earthquakes");
 
     @Getter
     @Setter

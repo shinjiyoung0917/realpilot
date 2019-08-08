@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ForecastSpaceTopModel {
-    private Response response;
+    private ForecastSpaceResponse response;
 }

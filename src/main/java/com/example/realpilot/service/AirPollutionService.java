@@ -7,10 +7,10 @@ import com.example.realpilot.externalApiModel.airPollutionForecastOverall.AirPol
 import com.example.realpilot.externalApiModel.airPollutionForecastOverall.AirPollutionForecastOverallTopModel;
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationListTopModel;
-import com.example.realpilot.externalApiModel.realTimeAirPollutionInfo.RealTimeAirPollutionInfo;
-import com.example.realpilot.externalApiModel.realTimeAirPollutionInfo.RealTimeAirPollutionInfoTopModel;
-import com.example.realpilot.externalApiModel.yellowDustInfo.YellowDustInfo;
-import com.example.realpilot.externalApiModel.yellowDustInfo.YellowDustInfoTopModel;
+import com.example.realpilot.externalApiModel.realTimeAirPollution.RealTimeAirPollution;
+import com.example.realpilot.externalApiModel.realTimeAirPollution.RealTimeAirPollutionTopModel;
+import com.example.realpilot.externalApiModel.yellowDust.YellowDust;
+import com.example.realpilot.externalApiModel.yellowDust.YellowDustTopModel;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.airPollution.AirPollutionOverall;
 import com.example.realpilot.model.airPollution.AirPollutionRootQuery;
@@ -52,14 +52,14 @@ public class AirPollutionService {
     private String serviceKey;
     @Value("${nearbyMeasureStationList.api.url}")
     private String measureStationApiUrl;
-    @Value("${realTimeAirPollutionInfo.api.url}")
-    private String realTimeAirPollutionInfoApiUrl;
+    @Value("${realTimeAirPollution.api.url}")
+    private String realTimeAirPollutionApiUrl;
     @Value("${airPollutionForecast.api.url}")
     private String airPollutionForecastApiUrl;
-    @Value("${sidoRealTimeAverageAirPollutionInfo.api.url}")
-    private String sidoRealTimeAverageAirPollutionInfoApiUrl;
-    @Value("${yellowDustInfo.api.url}")
-    private String yellowDustInfoApiUrl;
+    @Value("${sidoRealTimeAverageAirPollution.api.url}")
+    private String sidoRealTimeAverageAirPollutionApiUrl;
+    @Value("${yellowDust.api.url}")
+    private String yellowDustApiUrl;
 
     public void callNearbyMeasureStationListApi() {
         NearbyMeasureStationListTopModel nearbyMeasureStationListTopModel = new NearbyMeasureStationListTopModel();
@@ -67,7 +67,7 @@ public class AirPollutionService {
         Optional<Set<Regions>> optionalTmCoordList = regionDao.getTmCoordinateList();
 
         // TODO: optional isPresent 걸어주면 비동기처럼 수행되는 느낌..?
-        //if(optionalTmCoordList.isPresent()) {
+        if(optionalTmCoordList.isPresent()) {
             for (Regions eubmyeongdong : optionalTmCoordList.get()) {
                 URI uri = URI.create(measureStationApiUrl + "?ServiceKey=" + serviceKey + "&tmX=" + eubmyeongdong.getTmX() + "&tmY=" + eubmyeongdong.getTmY() + "&_returnType=json");
 
@@ -90,20 +90,20 @@ public class AirPollutionService {
                     regionDao.updateRegionNode(eubmyeongdong);
                 }
             }
-        //}
+        }
     }
 
-    public void callRealTimeAirPollutionInfoApi() {
-        RealTimeAirPollutionInfoTopModel realTimeAirPollutionInfoTopModel = new RealTimeAirPollutionInfoTopModel();
+    public void callRealTimeAirPollutionApi() {
+        RealTimeAirPollutionTopModel realTimeAirPollutionTopModel = new RealTimeAirPollutionTopModel();
 
         Optional<Set<Regions>> optionalMeasureStationList = regionDao.getMeasureStationList();
 
         if(optionalMeasureStationList.isPresent()) {
             for (Regions stationOfUmd : optionalMeasureStationList.get()) {
-                URI uri = URI.create(realTimeAirPollutionInfoApiUrl + "?ServiceKey=" + serviceKey + "&stationName=" + stationOfUmd.getMeasureStationName() + "&dataTerm=daily&ver=1.3&_returnType=json");
+                URI uri = URI.create(realTimeAirPollutionApiUrl + "?ServiceKey=" + serviceKey + "&stationName=" + stationOfUmd.getMeasureStationName() + "&dataTerm=daily&ver=1.3&_returnType=json");
 
                 try {
-                    realTimeAirPollutionInfoTopModel = restTemplate.getForObject(uri, RealTimeAirPollutionInfoTopModel.class);
+                    realTimeAirPollutionTopModel = restTemplate.getForObject(uri, RealTimeAirPollutionTopModel.class);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -115,22 +115,23 @@ public class AirPollutionService {
                     e.printStackTrace();
                 }
 
-                List<RealTimeAirPollutionInfo> realTimeAirPollutionInfoList = realTimeAirPollutionInfoTopModel.getList();
+                List<RealTimeAirPollution> realTimeAirPollutionList = realTimeAirPollutionTopModel.getList();
 
-                if(Optional.ofNullable(realTimeAirPollutionInfoList).isPresent() && !realTimeAirPollutionInfoList.isEmpty()) {
-                    Regions foundEubmyeondong = new Regions();
+                if(Optional.ofNullable(realTimeAirPollutionList).isPresent() && !realTimeAirPollutionList.isEmpty()) {
                     AirPollutionRootQuery airPollutionRootQuery = new AirPollutionRootQuery();
+                    Regions foundEubmyeondong = new Regions();
 
                     Optional<List<Regions>> regionList = regionDao.getRegionNodeWithMeasureStation(stationOfUmd.getMeasureStationName());
 
                     if(regionList.isPresent()) {
                         for (Regions eubmyeondong : regionList.get()) {
                             if (Optional.ofNullable(eubmyeondong.getUid()).isPresent()) {
-                                String dateAndTime = realTimeAirPollutionInfoList.get(0).getDataTime().replaceAll("-|:", "");
+                                String dateAndTime = realTimeAirPollutionList.get(0).getDataTime().replaceAll("-|:", "");
                                 String date = dateAndTime.substring(0, 8);
                                 String time = dateAndTime.substring(9, 13);
+                                Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(date, time);
 
-                                checkAlreadyExistingAirPollutionDetailNode(airPollutionRootQuery, foundEubmyeondong, eubmyeondong.getUid(), DateUnit.HOUR, Query.AIR_POLLUTION_DETAIL);
+                                checkAlreadyExistingAirPollutionDetailNode(airPollutionRootQuery, foundEubmyeondong, eubmyeondong.getUid(), dateMap, DateUnit.HOUR, Query.AIR_POLLUTION_DETAIL);
 
                                 List<AirPollutionDetail> airPollutionDetailList = airPollutionRootQuery.getAirPollutionDetail();
 
@@ -138,7 +139,7 @@ public class AirPollutionService {
 
                                 if (Optional.ofNullable(airPollutionDetailList).isPresent() && !airPollutionDetailList.isEmpty()) {
                                     AirPollutionDetail oldAirPollutionDetail = airPollutionDetailList.get(0);
-                                    newAirPollutionDetail.setAirPollutionDetail(oldAirPollutionDetail.getUid(), realTimeAirPollutionInfoList.get(0));
+                                    newAirPollutionDetail.setAirPollutionDetail(oldAirPollutionDetail.getUid(), realTimeAirPollutionList.get(0));
                                     airPollutionDao.updateAirPollutionNode(newAirPollutionDetail);
                                 } else {
                                     AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail1 = new AtomicReference<>(Optional.empty());
@@ -148,7 +149,7 @@ public class AirPollutionService {
                                     foundAirPollutionDetail1.get().ifPresent(notNullAirPollutionDetail -> airPollutionDetailUid.set(notNullAirPollutionDetail.getUid()));
 
                                     newAirPollutionDetail = new AirPollutionDetail();
-                                    newAirPollutionDetail.setAirPollutionDetail(airPollutionDetailUid.get(), realTimeAirPollutionInfoList.get(0));
+                                    newAirPollutionDetail.setAirPollutionDetail(airPollutionDetailUid.get(), realTimeAirPollutionList.get(0));
 
                                     foundEubmyeondong.getAirPollutionDetails().add(newAirPollutionDetail);
                                     regionDao.updateRegionNode(foundEubmyeondong);
@@ -156,7 +157,6 @@ public class AirPollutionService {
                                     AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail2 = new AtomicReference<>(Optional.empty());
                                     Optional.ofNullable(foundEubmyeondong.getUid()).ifPresent(uid -> foundAirPollutionDetail2.set(airPollutionDao.getAirPollutionDetailNodeLinkedToRegionWithRegionUidAndDate(uid, date, time)));
 
-                                    Map<DateUnit, Integer> dateMap = dateService.splitDateAndTime(date, time);
                                     Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
                                     if (foundAirPollutionDetail2.get().isPresent()) {
@@ -164,7 +164,7 @@ public class AirPollutionService {
                                         dateDao.updateDateNode(hourNode);
                                     }
                                 }
-                                log.info("[Service] callRealTimeAirPollutionInfoApi - " + time + "시의 " + "지역->대기질<-날짜 노드 연결 완료");
+                                log.info("[Service] callRealTimeAirPollutionApi - " + time + "시의 " + "지역->대기질<-날짜 노드 연결 완료");
                             }
                         }
                     }
@@ -173,8 +173,7 @@ public class AirPollutionService {
         }
     }
 
-    private void checkAlreadyExistingAirPollutionDetailNode(AirPollutionRootQuery airPollutionRootQuery, Regions foundEubmyeondong, String uid, DateUnit dateUnit, Query query) {
-        Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
+    private void checkAlreadyExistingAirPollutionDetailNode(AirPollutionRootQuery airPollutionRootQuery, Regions foundEubmyeondong, String uid,  Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
         airPollutionRootQuery.setAirPollutionRootQuery(airPollutionDao.getAlreadyExistingAirPollutionNodeWithRegionUidAndDate(uid, dateMap, "", dateUnit, query));
         Optional.ofNullable(airPollutionRootQuery.getRegion()).ifPresent(region -> foundEubmyeondong.setRegion(region.get(0)));
     }
@@ -230,51 +229,53 @@ public class AirPollutionService {
 
                     AirPollutionOverall newAirPollutionOverall = new AirPollutionOverall();
 
-                    if (Optional.ofNullable(airPollutionOverallList).isPresent() && !airPollutionOverallList.isEmpty()) {
-                        AirPollutionOverall oldAirPollutionOverall = airPollutionOverallList.get(0);
-                        newAirPollutionOverall.setAirPollutionOverall(oldAirPollutionOverall.getUid(), airPollutionForecastOverall, dayTerm);
-                        airPollutionDao.updateAirPollutionNode(newAirPollutionOverall);
-                    } else {
-                        String date = airPollutionForecastOverall.getInformData().replaceAll("-", "");
-                        String time = "";
+                    if(Optional.ofNullable(foundCountry.getUid()).isPresent()) {
+                        if (Optional.ofNullable(airPollutionOverallList).isPresent() && !airPollutionOverallList.isEmpty()) {
+                            AirPollutionOverall oldAirPollutionOverall = airPollutionOverallList.get(0);
+                            newAirPollutionOverall.setAirPollutionOverall(oldAirPollutionOverall.getUid(), airPollutionForecastOverall, dayTerm);
+                            airPollutionDao.updateAirPollutionNode(newAirPollutionOverall);
+                        } else {
+                            String date = airPollutionForecastOverall.getInformData().replaceAll("-", "");
+                            String time = "";
 
-                        if (dayTerm == 0) {
-                            time = dateService.convertToDoubleDigit(todayDateMap.get(DateUnit.HOUR))  + "00";
-                        }
-
-                        AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall1 = new AtomicReference<>(Optional.empty());
-                        String finalTime = time;
-                        Optional.ofNullable(countryUid).ifPresent(uid -> foundAirPollutionOverall1.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(countryUid, date, finalTime, airPollutionForecastOverall.getInformCode())));
-
-                        AtomicReference<String> airPollutionOverallUid = new AtomicReference<>();
-                        foundAirPollutionOverall1.get().ifPresent(notNullAirPollutionOverall -> airPollutionOverallUid.set(notNullAirPollutionOverall.getUid()));
-
-                        newAirPollutionOverall = new AirPollutionOverall();
-                        newAirPollutionOverall.setAirPollutionOverall(airPollutionOverallUid.get(), airPollutionForecastOverall, dayTerm);
-
-                        foundCountry.getAirPollutionOveralls().add(newAirPollutionOverall);
-                        regionDao.updateRegionNode(foundCountry);
-
-                        AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall2 = new AtomicReference<>(Optional.empty());
-                        Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundAirPollutionOverall2.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(uid, date, finalTime, airPollutionForecastOverall.getInformCode())));
-
-                        if (dayTerm == 0) {
-                            Optional<Hour> hourNode = dateDao.getHourNode(todayDateMap);
-
-                            if (foundAirPollutionOverall2.get().isPresent()) {
-                                hourNode.ifPresent(hour -> hour.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                            if (dayTerm == 0) {
+                                time = dateService.convertToDoubleDigit(todayDateMap.get(DateUnit.HOUR)) + "00";
                             }
-                            dateDao.updateDateNode(hourNode);
-                        } else if (dayTerm >= 1) {
-                            Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
 
-                            if (foundAirPollutionOverall2.get().isPresent()) {
-                                dayNode.ifPresent(day -> day.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                            AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall1 = new AtomicReference<>(Optional.empty());
+                            String finalTime = time;
+                            Optional.ofNullable(countryUid).ifPresent(uid -> foundAirPollutionOverall1.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(countryUid, date, finalTime, airPollutionForecastOverall.getInformCode())));
+
+                            AtomicReference<String> airPollutionOverallUid = new AtomicReference<>();
+                            foundAirPollutionOverall1.get().ifPresent(notNullAirPollutionOverall -> airPollutionOverallUid.set(notNullAirPollutionOverall.getUid()));
+
+                            newAirPollutionOverall = new AirPollutionOverall();
+                            newAirPollutionOverall.setAirPollutionOverall(airPollutionOverallUid.get(), airPollutionForecastOverall, dayTerm);
+
+                            foundCountry.getAirPollutionOveralls().add(newAirPollutionOverall);
+                            regionDao.updateRegionNode(foundCountry);
+
+                            AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall2 = new AtomicReference<>(Optional.empty());
+                            Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundAirPollutionOverall2.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(uid, date, finalTime, airPollutionForecastOverall.getInformCode())));
+
+                            if (dayTerm == 0) {
+                                Optional<Hour> hourNode = dateDao.getHourNode(todayDateMap);
+
+                                if (foundAirPollutionOverall2.get().isPresent()) {
+                                    hourNode.ifPresent(hour -> hour.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                                }
+                                dateDao.updateDateNode(hourNode);
+                            } else if (dayTerm >= 1) {
+                                Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
+
+                                if (foundAirPollutionOverall2.get().isPresent()) {
+                                    dayNode.ifPresent(day -> day.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                                }
+                                dateDao.updateDateNode(dayNode);
                             }
-                            dateDao.updateDateNode(dayNode);
-                        }
 
-                        foundCountry.getAirPollutionOveralls().clear();
+                            foundCountry.getAirPollutionOveralls().clear();
+                        }
                     }
                 }
                 prevDataTime = airPollutionForecastOverall.getDataTime();
@@ -288,23 +289,5 @@ public class AirPollutionService {
     private void checkAlreadyExistingAirPollutionOverallNode(AirPollutionRootQuery airPollutionRootQuery, Regions foundCountry, String uid, Map<DateUnit, Integer> dateMap, String airPollutionCode, DateUnit dateUnit, Query query) {
         airPollutionRootQuery.setAirPollutionRootQuery(airPollutionDao.getAlreadyExistingAirPollutionNodeWithRegionUidAndDate(uid, dateMap, airPollutionCode, dateUnit, query));
         Optional.ofNullable(airPollutionRootQuery.getRegion()).ifPresent(country -> foundCountry.setCountry(country.get(0)));
-    }
-
-    public void callYellowDustInfoApi() {
-        YellowDustInfoTopModel yellowDustInfoTopModel = new YellowDustInfoTopModel();
-
-        URI uri = URI.create(yellowDustInfoApiUrl + "?ServiceKey=" + serviceKey + "&_returnType=json");
-
-        try {
-            yellowDustInfoTopModel = restTemplate.getForObject(uri, YellowDustInfoTopModel.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        List<YellowDustInfo> yellowDustInfoList = yellowDustInfoTopModel.getList();
-
-        if(Optional.ofNullable(yellowDustInfoList).isPresent() && !yellowDustInfoList.isEmpty()) {
-
-        }
     }
 }

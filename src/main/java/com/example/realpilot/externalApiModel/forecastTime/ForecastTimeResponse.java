@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ForecastTimeTopModel {
-    private ForecastTimeResponse response;
+public class ForecastTimeResponse {
+    private ForecastTimeBody body;
 }

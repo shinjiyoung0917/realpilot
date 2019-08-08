@@ -5,9 +5,6 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ForecastGrib {
-    private String baseDate;
-    private String baseTime;
-    private String category;
-    private String obsrValue; //Float
+public class ForecastGribBody {
+    private ForecastGribItems items;
 }

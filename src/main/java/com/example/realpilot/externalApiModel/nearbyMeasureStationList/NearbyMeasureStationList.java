@@ -8,5 +8,5 @@ import lombok.Data;
 public class NearbyMeasureStationList {
     private String stationName;
     private String addr;
-    private Float tm;
+    //private Float tm;
 }

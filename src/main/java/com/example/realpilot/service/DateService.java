@@ -81,7 +81,7 @@ public class DateService {
 
     public String makeCurrentMinuteFormat(ExternalWeatherApi api) {
         int minute = 0;
-        if(api.equals(ExternalWeatherApi.FORECAST_SPACE)) {
+        if(api.equals(ExternalWeatherApi.FORECAST_TIME)) {
             Calendar calendar = Calendar.getInstance();
             minute = calendar.get(Calendar.MINUTE);
         }

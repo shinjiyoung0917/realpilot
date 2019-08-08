@@ -11,5 +11,5 @@ public class ForecastTime {
     private String fcstDate;
     private String fcstTime;
     private String category;
-    private Float fcstValue;
+    private String fcstValue; //Float
 }

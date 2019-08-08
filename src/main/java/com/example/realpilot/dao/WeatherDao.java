@@ -90,10 +90,7 @@ public class WeatherDao<T> {
         return result;
     }
 
-    public WeatherRootQuery getAlreadyExistingWeatherNodeWithRegionNameAndDate(String sidoName, String sggName, String umdName, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
-        // TODO; 서비스에서 하도록
-        Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
-
+    public WeatherRootQuery getAlreadyExistingWeatherNodeWithRegionNameAndDate(String sidoName, String sggName, String umdName, Map<DateUnit, Integer> dateMap, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
         String fullQueryString = "";
         Map<String, String> var = new LinkedHashMap<>();
 

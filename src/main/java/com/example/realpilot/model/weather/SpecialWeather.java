@@ -1,16 +1,16 @@
 package com.example.realpilot.model.weather;
 
-import com.example.realpilot.externalApiModel.specialWeather.SpecialWeatherReport;
+import com.example.realpilot.externalApiModel.specialWeather.SpecialWeatherInfo;
 import lombok.Data;
 
 @Data
 public class SpecialWeather extends Weathers {
-    public void setSpecialWeather(String uid, SpecialWeatherReport specialWeatherReport) {
+    public void setSpecialWeather(String uid, SpecialWeatherInfo specialWeatherInfo) {
         this.setUid(uid);
-        this.setReleaseDate(specialWeatherReport.getTmFc().substring(0, 8));
-        this.setReleaseTime(specialWeatherReport.getTmFc().substring(8, 12));
-        this.setAreaOfSpecialWeather(specialWeatherReport.getT2());
-        this.setCurrentStatusSpecialWeather(specialWeatherReport.getT6());
+        this.setReleaseDate(specialWeatherInfo.getTmFc().substring(0, 8));
+        this.setReleaseTime(specialWeatherInfo.getTmFc().substring(8, 12));
+        this.setAreaOfSpecialWeather(specialWeatherInfo.getT2());
+        this.setCurrentStatusSpecialWeather(specialWeatherInfo.getT6());
     }
 
 }

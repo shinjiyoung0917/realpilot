@@ -3,10 +3,9 @@ package com.example.realpilot.externalApiModel.forecastTime;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Items {
-    private List<ForecastTime> item;
+public class ForecastTimeBody {
+    private ForecastTimeItems items;
+    private int totalCount;
 }

@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Response {
-    private Body body;
+public class SpecialWeatherInfoBody {
+    private SpecialWeatherInfoItems items;
 }
