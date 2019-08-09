@@ -175,7 +175,9 @@ public class AirPollutionService {
 
     private void checkAlreadyExistingAirPollutionDetailNode(AirPollutionRootQuery airPollutionRootQuery, Regions foundEubmyeondong, String uid,  Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
         airPollutionRootQuery.setAirPollutionRootQuery(airPollutionDao.getAlreadyExistingAirPollutionNodeWithRegionUidAndDate(uid, dateMap, "", dateUnit, query));
-        Optional.ofNullable(airPollutionRootQuery.getRegion()).ifPresent(region -> foundEubmyeondong.setRegion(region.get(0)));
+        if(Optional.ofNullable(airPollutionRootQuery.getRegion()).isPresent() && !airPollutionRootQuery.getRegion().isEmpty()) {
+            foundEubmyeondong.setRegion(airPollutionRootQuery.getRegion().get(0));
+        }
     }
 
     public void callAirPollutionForecastApi() {
@@ -288,6 +290,8 @@ public class AirPollutionService {
 
     private void checkAlreadyExistingAirPollutionOverallNode(AirPollutionRootQuery airPollutionRootQuery, Regions foundCountry, String uid, Map<DateUnit, Integer> dateMap, String airPollutionCode, DateUnit dateUnit, Query query) {
         airPollutionRootQuery.setAirPollutionRootQuery(airPollutionDao.getAlreadyExistingAirPollutionNodeWithRegionUidAndDate(uid, dateMap, airPollutionCode, dateUnit, query));
-        Optional.ofNullable(airPollutionRootQuery.getRegion()).ifPresent(country -> foundCountry.setCountry(country.get(0)));
+        if(Optional.ofNullable(airPollutionRootQuery.getRegion()).isPresent() && !airPollutionRootQuery.getRegion().isEmpty()) {
+            foundCountry.setRegion(airPollutionRootQuery.getRegion().get(0));
+        }
     }
 }

@@ -30,13 +30,13 @@ public class TotalService {
 
     @PostConstruct
     private void totalFlow() throws IOException {
-        /*regionService.doForAddressCodeFile();
-        regionService.doForGridFile();
-
-        regionService.addRegionNode();
-        regionService.printRegionData();
+        /*regionService.loadRegionData();
+        regionService.addKoreaRegionNode();
+        regionService.printKoreaRegionData();
+        regionService.addWorldRegionNode();
         dateService.addDateNode();
-*/
+        */
+
         restTemplate.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
 
         //regionService.callTmCoordinateApi();
@@ -44,7 +44,7 @@ public class TotalService {
         //airPollutionService.callRealTimeAirPollutionApi();
         //airPollutionService.callAirPollutionForecastApi();
         //weatherService.callSpecialWeatherApi();
-        disasterService.callEarthquakeApi();
+        //disasterService.callEarthquakeApi();
 
         //weatherService.callWeatherApiOfKma();
         weatherService.callWeatherApiOfKweather();

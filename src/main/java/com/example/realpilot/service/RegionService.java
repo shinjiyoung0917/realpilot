@@ -3,6 +3,7 @@ package com.example.realpilot.service;
 import com.example.realpilot.dao.RegionDao;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
+import com.example.realpilot.model.region.Country;
 import com.example.realpilot.model.region.Eubmyeondong;
 import com.example.realpilot.model.region.Regions;
 import com.example.realpilot.model.region.Sigungu;
@@ -18,8 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.*;
 
@@ -43,23 +43,47 @@ public class RegionService {
     @Value("${grid.file.path}")
     private String gridFilePath;
 
-    public Map<String, Regions> regionMap = new LinkedHashMap<>();
-    public Set<List<Integer>> gridSet = new LinkedHashSet<>();
+    public Map<String, Regions> koreaRegionMap = new LinkedHashMap<>();
 
-    public void doForAddressCodeFile() throws IOException {
-        log.info("[Service] readAddressCodeExcelFile 로그 - 진입");
-
-        FileInputStream fis = new FileInputStream(addressCodeFilePath);
-        readAnyExcelFile(fis, ExcelFileName.ADDRESS_CODE);
+    public void loadRegionData() {
+        doForAddressCodeFile();
+        doForGridFile();
     }
 
-    public void doForGridFile() throws IOException {
-        log.info("[Service] readGridExcelFile 로그 - 진입");
+    private void doForAddressCodeFile() {
+        log.info("[Service] doForAddressCodeFile 로그 - 진입");
 
-        FileInputStream fis = new FileInputStream(gridFilePath);
-        readAnyExcelFile(fis, ExcelFileName.GRID);
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(addressCodeFilePath);
+            readAnyExcelFile(fis, ExcelFileName.ADDRESS_CODE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-        addGridDataToSet();
+    private void doForGridFile() {
+        log.info("[Service] doForGridFile 로그 - 진입");
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(gridFilePath);
+            readAnyExcelFile(fis, ExcelFileName.GRID);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void readAnyExcelFile(FileInputStream fis, ExcelFileName fileName) throws IOException {
@@ -100,7 +124,7 @@ public class RegionService {
                 }
 
                 if (checkForValidData(keyString)) {
-                    regionMap.put(keyString, region);
+                    koreaRegionMap.put(keyString, region);
                 }
             }
         }
@@ -124,25 +148,12 @@ public class RegionService {
                     if(cell == null) {
                         continue;
                     } else {
-                        Optional<Regions> originalRegion = Optional.ofNullable(regionMap.get(keyString));
+                        Optional<Regions> originalRegion = Optional.ofNullable(koreaRegionMap.get(keyString));
                         keyString = tempRegion.setRegionByGrid(cell, columnIndex, keyString, originalRegion);
                     }
                 }
             }
         }
-    }
-
-    private void addGridDataToSet() {
-        for(Map.Entry<String, Regions> entry : regionMap.entrySet()) {
-            Optional optinalValue = Optional.ofNullable(entry.getValue().getGridX());
-            if(optinalValue.isPresent()) {
-                List<Integer> grid = new ArrayList<>();
-                grid.add(entry.getValue().getGridX());
-                grid.add(entry.getValue().getGridY());
-                gridSet.add(grid);
-            }
-        }
-
     }
 
     private boolean checkForValidData(String keyString) {
@@ -153,9 +164,33 @@ public class RegionService {
         return true;
     }
 
-    public void addRegionNode() {
-        regionDao.createRegionNode(regionMap);
+    public void addKoreaRegionNode() {
+        regionDao.createRegionNode(koreaRegionMap);
         log.info("[Service] addRegionNode 로그 - DB에 지역 데이터 삽입 완료");
+    }
+
+    public void printKoreaRegionData() {
+        for(String regionName : koreaRegionMap.keySet()) {
+            log.info("[Service] printRegionData - " + regionName + " / " + koreaRegionMap.get(regionName));
+        }
+    }
+
+    public void addWorldRegionNode() {
+        for(CountryList oneCountry : CountryList.values()) {
+            if(oneCountry.getCountryName().equals(CountryList.KOREA.getCountryName())) {
+                continue;
+            }
+            Optional<Country> optionalCountry = regionDao.getCountryNodeWithName(oneCountry.getCountryName());
+            String countryUid = null;
+            if(optionalCountry.isPresent() && Optional.ofNullable(optionalCountry.get().getUid()).isPresent()) {
+                countryUid = optionalCountry.get().getUid();
+            }
+            Country country = new Country();
+            country.setCountry(countryUid, oneCountry);
+
+            regionDao.updateRegionNode(country);
+            log.info("[Service] addWorldRegionNode - " + country.getCountryName() + " 노드 삽입 완료");
+        }
     }
 
     public void callTmCoordinateApi() {
@@ -196,12 +231,6 @@ public class RegionService {
 
                 regionDao.updateRegionNode(region);
             }
-        }
-    }
-
-    public void printRegionData() {
-        for(String regionName : regionMap.keySet()) {
-            log.info("[Service] printRegionData - " + regionName + " / " + regionMap.get(regionName));
         }
     }
 }

@@ -5,10 +5,8 @@ import lombok.Data;
 
 @Data
 public class Country extends Regions {
-    public void setCountry(Country country, CountryList countryList) {
-        this.setUid(country.getUid());
+    public void setCountry(String uid, CountryList countryList) {
+        this.setUid(uid);
         this.setCountryName(countryList.getCountryName());
-        /*this.uid = country.getUid();
-        this.countryName = countryList.getCountryName();*/
     }
 }

@@ -90,7 +90,7 @@ public class WeatherDao<T> {
         return result;
     }
 
-    public WeatherRootQuery getAlreadyExistingWeatherNodeWithRegionNameAndDate(String sidoName, String sggName, String umdName, Map<DateUnit, Integer> dateMap, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
+    public WeatherRootQuery getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(String sidoName, String sggName, String umdName, Map<DateUnit, Integer> dateMap, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
         String fullQueryString = "";
         Map<String, String> var = new LinkedHashMap<>();
 
@@ -235,6 +235,44 @@ public class WeatherDao<T> {
         return fullQueryString;
     }
 
+    public WeatherRootQuery getAlreadyExistingWeatherNodeOfWorldWithRegionNameAndDate(String cityName, Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$countryName", cityName);
+        // TODO: 날짜, 시간 파라미터 설정하는 로직 중복 해결하기
+        var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
+        var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
+        var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
+
+        String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
+        String fullQueryString = queryStringWithCountryNameAndDate(dateQueryString, query.getRootQuery(), query.getEdge());
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+
+        return weatherRootQuery;
+    }
+
+    private String queryStringWithCountryNameAndDate(String dateQueryString, String rootQuery, String edge) {
+        String fullQueryString = "query region($countryName: string, $year: int, $month: int, $day: int) {\n" +
+                " region(func: eq(countryName, $countryName)) {\n" +
+                "    uid\n" +
+                "    countryName\n" +
+                "    var1 as " + edge + " {\n" +
+                "      uid\n" +
+                "    }\n" +
+                "  }\n" +
+                "    \n" +
+                dateQueryString +
+                "    \n" +
+                "  " + rootQuery + "(func: uid(var1)) @filter(uid(var2)) {\n" +
+                "    uid\n" +
+                "    expand(_all_)\n" +
+                "  }\n" +
+                "}";
+
+        return fullQueryString;
+    }
+
     public Optional<DailyWeather> getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
         DgraphProto.Response res;
 
@@ -293,6 +331,45 @@ public class WeatherDao<T> {
     }
 
     private DgraphProto.Response queryForKweatherDay7OrAmPm7(String uid, String forecastDate, String rootQuery, String edge) {
+        String fullQueryString = "query " + rootQuery + "($id: string, $forecastDate: string) {\n" +
+                "  " + rootQuery + "(func: uid($id)) {\n" +
+                "    " + edge + " @filter(eq(forecastDate, $forecastDate)) {\n" +
+                "      uid\n" +
+                "      expand(_all_)\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        Map<String, String> var = new LinkedHashMap<>();
+        var.put("$id", uid);
+        var.put("$forecastDate", forecastDate);
+
+        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+
+        return res;
+    }
+
+    public Optional<WorldDailyWeather> getWorldDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
+        DgraphProto.Response res;
+
+        res = queryForKweatherWorld(uid, forecastDate, Query.WORLD_DAILY_WEATHER.getRootQuery(), Query.WORLD_DAILY_WEATHER.getEdge());
+
+        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        List<WorldDailyWeather> worldDailyWeatherResult =  weatherRootQuery.getWorldDailyWeather();
+
+        Optional<WorldDailyWeather> result = Optional.empty();
+        if(Optional.ofNullable(worldDailyWeatherResult).isPresent() && !worldDailyWeatherResult.isEmpty()) {
+            List<WorldDailyWeather> worldDailyWeatherList = worldDailyWeatherResult.get(0).getWorldDailyWeathers();
+            if(Optional.ofNullable(worldDailyWeatherList).isPresent() && !worldDailyWeatherList.isEmpty()) {
+                result = Optional.of(worldDailyWeatherList.get(0));
+            }
+        }
+
+        return result;
+    }
+
+    // TODO: 중복 해결
+    private DgraphProto.Response queryForKweatherWorld(String uid, String forecastDate, String rootQuery, String edge) {
         String fullQueryString = "query " + rootQuery + "($id: string, $forecastDate: string) {\n" +
                 "  " + rootQuery + "(func: uid($id)) {\n" +
                 "    " + edge + " @filter(eq(forecastDate, $forecastDate)) {\n" +

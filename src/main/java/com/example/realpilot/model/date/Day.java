@@ -1,10 +1,7 @@
 package com.example.realpilot.model.date;
 
 import com.example.realpilot.model.airPollution.AirPollutionOverall;
-import com.example.realpilot.model.weather.AmWeather;
-import com.example.realpilot.model.weather.DailyWeather;
-import com.example.realpilot.model.weather.HourlyWeather;
-import com.example.realpilot.model.weather.PmWeather;
+import com.example.realpilot.model.weather.*;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -23,6 +20,7 @@ public class Day { // TODO: extends Dates
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
+    private List<WorldDailyWeather> worldDailyWeathers = new ArrayList<>();
     private List<AirPollutionOverall> airPollutionOveralls = new ArrayList<>();
 
     public void setDate(int d, List<Hour> hourList) {

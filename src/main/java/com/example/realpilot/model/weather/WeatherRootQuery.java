@@ -12,6 +12,7 @@ public class WeatherRootQuery {
     private List<DailyWeather> dailyWeather;
     private List<AmWeather> amWeather;
     private List<PmWeather> pmWeather;
+    private List<WorldDailyWeather> worldDailyWeather;
     private List<SpecialWeather> specialWeather;
     private List<Regions> region;
     private List<Dates> date;
@@ -21,6 +22,7 @@ public class WeatherRootQuery {
         this.dailyWeather = weatherRootQuery.getDailyWeather();
         this.amWeather = weatherRootQuery.getAmWeather();
         this.pmWeather = weatherRootQuery.getPmWeather();
+        this.worldDailyWeather = weatherRootQuery.getWorldDailyWeather();
         this.region = weatherRootQuery.getRegion();
         this.date = weatherRootQuery.getDate();
     }

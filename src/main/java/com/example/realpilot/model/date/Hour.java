@@ -2,6 +2,7 @@ package com.example.realpilot.model.date;
 
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.airPollution.AirPollutionOverall;
+import com.example.realpilot.model.disaster.Earthquake;
 import com.example.realpilot.model.weather.HourlyWeather;
 import com.example.realpilot.model.weather.SpecialWeather;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class Hour { // TODO: extends Dates
     private List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
     private List<AirPollutionOverall> airPollutionOveralls = new ArrayList<>();
     private List<SpecialWeather> specialWeathers = new ArrayList<>();
+    private List<Earthquake> earthquakes = new ArrayList<>();
 
     public void setDate(int h) {
         this.hour = h;

@@ -8,6 +8,7 @@ public enum Query {
     DAILY_WEATHER("dailyWeather", "dailyWeathers"),
     AM_WEATHER("amWeather", "amWeathers"),
     PM_WEATHER("pmWeather", "pmWeathers"),
+    WORLD_DAILY_WEATHER("worldDailyWeather", "worldDailyWeathers"),
     AIR_POLLUTION_DETAIL("airPollutionDetail", "airPollutionDetails"),
     AIR_POLLUTION_OVERALL("airPollutionOverall", "airPollutionOveralls"),
     SPECIAL_WEATHER("specialWeather", "specialWeathers"),

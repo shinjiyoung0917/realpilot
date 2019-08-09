@@ -3,6 +3,7 @@ package com.example.realpilot.model.region;
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
 import com.example.realpilot.model.airPollution.AirPollutionDetail;
 import com.example.realpilot.model.airPollution.AirPollutionOverall;
+import com.example.realpilot.model.disaster.Earthquake;
 import com.example.realpilot.model.weather.*;
 import com.example.realpilot.utilAndConfig.AddressCodeFileIndex;
 import com.example.realpilot.utilAndConfig.GridFileIndex;
@@ -41,9 +42,11 @@ public class Regions {
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
+    private List<WorldDailyWeather> worldDailyWeathers = new ArrayList<>();
     private List<AirPollutionDetail> airPollutionDetails = new ArrayList<>();
     private List<AirPollutionOverall> airPollutionOveralls = new ArrayList<>();
     private List<SpecialWeather> specialWeathers = new ArrayList<>();
+    private List<Earthquake> earthquakes = new ArrayList<>();
 
     public void setCountry(Regions country) {
         this.setUid(country.getUid());

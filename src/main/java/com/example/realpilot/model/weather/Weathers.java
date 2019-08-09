@@ -62,6 +62,9 @@ public class Weathers {
     private Float temp;
     private String icon40a;
 
+    private Float humidity;
+    private Float windSpeed;
+
     private String areaOfSpecialWeather;
     private String currentStatusSpecialWeather;
 
@@ -69,6 +72,7 @@ public class Weathers {
     private List<DailyWeather> dailyWeathers = new ArrayList<>();
     private List<AmWeather> amWeathers = new ArrayList<>();
     private List<PmWeather> pmWeathers = new ArrayList<>();
+    private List<WorldDailyWeather> worldDailyWeathers = new ArrayList<>();
     private List<SpecialWeather> specialWeathers = new ArrayList<>();
 
 }

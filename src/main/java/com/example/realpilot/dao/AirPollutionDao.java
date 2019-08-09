@@ -61,6 +61,7 @@ public class AirPollutionDao<T> {
         String fullQueryString = "query region($id: string, $year: int, $month: int, $day: int, $hour: int, $airPollutionCode: string) {\n" +
                 " region(func: uid($id)) {\n" +
                 "    uid\n" +
+                "    countryName\n" +
                 "    sidoName\n" +
                 "    sggName\n" +
                 "    umdName\n";

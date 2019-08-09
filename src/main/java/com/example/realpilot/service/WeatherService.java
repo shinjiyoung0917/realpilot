@@ -14,6 +14,9 @@ import com.example.realpilot.externalApiModel.kweatherDay7.DayOfDay7;
 import com.example.realpilot.externalApiModel.kweatherDay7.KweatherDay7TopModel;
 import com.example.realpilot.externalApiModel.kweatherShko.AreaOfShko;
 import com.example.realpilot.externalApiModel.kweatherShko.KweatherShkoTopModel;
+import com.example.realpilot.externalApiModel.kweatherWorld.AreaOfWorld;
+import com.example.realpilot.externalApiModel.kweatherWorld.DayOfWorld;
+import com.example.realpilot.externalApiModel.kweatherWorld.KweatherWorldTopModel;
 import com.example.realpilot.externalApiModel.specialWeather.*;
 import com.example.realpilot.model.date.Day;
 import com.example.realpilot.model.date.Hour;
@@ -63,6 +66,8 @@ public class WeatherService<T> {
     private String kweatherAmPm7ApiUrl;
     @Value("${kweatherShko.api.url}")
     private String kweatherShkoApiUrl;
+    @Value("${kweatherWorld.api.url}")
+    private String kweatherWorldApiUrl;
     @Value("${specialWeather.api.url}")
     private String specialWeatherApiUrl;
 
@@ -71,8 +76,6 @@ public class WeatherService<T> {
 
     // 동네예보 API(초단기실황/초단기예보/동네예보)
     public void callWeatherApiOfKma() {
-        Set<List<Integer>> gridSet = regionService.gridSet;
-
         ForecastGribTopModel forecastGribTopModel = new ForecastGribTopModel();
         ForecastTimeTopModel forecastTimeTopModel = new ForecastTimeTopModel();
         ForecastSpaceTopModel forecastSpaceTopModel = new ForecastSpaceTopModel();
@@ -342,16 +345,19 @@ public class WeatherService<T> {
         KweatherDay7TopModel kweatherDay7TopModel = new KweatherDay7TopModel();
         KweatherAmPm7TopModel kweatherAmPm7TopModel = new KweatherAmPm7TopModel();
         KweatherShkoTopModel kweatherShkoTopModel = new KweatherShkoTopModel();
+        KweatherWorldTopModel kweatherWorldTopModel = new KweatherWorldTopModel();
 
         URI kweatherDay7Uri = URI.create(kweatherDay7ApiUrl);
         URI kweatherAmPm7Uri = URI.create(kweatherAmPm7ApiUrl);
         URI kweatherShkoUri = URI.create(kweatherShkoApiUrl);
+        URI kweatherWorldUri = URI.create(kweatherWorldApiUrl);
 
         Map<DateUnit, Integer> dateMap = dateService.getCurrentDate();
 
-        callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri, dateMap);
-        callKweatherAmPm7Api(kweatherAmPm7TopModel, kweatherAmPm7Uri, dateMap);
-        callKweatherShkoApi(kweatherShkoTopModel, kweatherShkoUri, dateMap);
+        //callKweatherDay7Api(kweatherDay7TopModel, kweatherDay7Uri, dateMap);
+        //callKweatherAmPm7Api(kweatherAmPm7TopModel, kweatherAmPm7Uri, dateMap);
+        //callKweatherShkoApi(kweatherShkoTopModel, kweatherShkoUri, dateMap);
+        callWorldWeatherApiOfKweather(kweatherWorldTopModel, kweatherWorldUri, dateMap);
     }
 
     private void callKweatherDay7Api(KweatherDay7TopModel kweatherDay7TopModel, URI kweatherDay7Uri, Map<DateUnit, Integer> dateMap) {
@@ -374,14 +380,14 @@ public class WeatherService<T> {
             if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
                 sidoName = area.getAreaname1();
                 umdName = area.getAreaname2();
-                checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
+                checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
             } else {
                 if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
                     sidoName = area.getAreaname2();
-                    checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.DAILY_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.DAILY_WEATHER);
                 } else if(area.getAreaname2().equals("NA")) {
                     sidoName = area.getAreaname1();
-                    checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.DAILY_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.DAILY_WEATHER);
                 } else {
                     sidoName = area.getAreaname1();
                     sggName = area.getAreaname2() + " " + area.getAreaname3();
@@ -392,10 +398,10 @@ public class WeatherService<T> {
                     }
 
                     if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
-                        checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.DAILY_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.DAILY_WEATHER);
                     } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
                         umdName = area.getAreaname4();
-                        checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.DAILY_WEATHER);
                     }
                 }
             }
@@ -414,7 +420,7 @@ public class WeatherService<T> {
                 } else {
                     for (DayOfDay7 oneDay : area.getDayList()) {
                         AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>(Optional.empty());
-                        Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                        Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                         AtomicReference<String> dailyWeatherUid = new AtomicReference<>();
                         foundDailyWeather.get().ifPresent(notNullDailyWeather-> dailyWeatherUid.set(notNullDailyWeather.getUid()));
@@ -429,7 +435,7 @@ public class WeatherService<T> {
 
                     for (DayOfDay7 oneDay : area.getDayList()) {
                         AtomicReference<Optional<DailyWeather>> foundDailyWeather = new AtomicReference<>(Optional.empty());
-                        Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                        Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundDailyWeather.set(weatherDao.getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                         Map<DateUnit, Integer> forecastDateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                         Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
@@ -468,19 +474,19 @@ public class WeatherService<T> {
             if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
                 sidoName = area.getAreaname1();
                 umdName = area.getAreaname2();
-                checkAlreadyExistingWeatherNode(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.AM_WEATHER);
-                weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.PM_WEATHER);
+                checkAlreadyExistingWeatherNodeOfKorea(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.AM_WEATHER);
+                weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.DAY, Query.PM_WEATHER);
                 regionUnit = Optional.of(RegionUnit.SIDO_UMD);
             } else {
                 if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
                     sidoName = area.getAreaname2();
-                    checkAlreadyExistingWeatherNode(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.AM_WEATHER);
-                    weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.PM_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.AM_WEATHER);
+                    weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.PM_WEATHER);
                     regionUnit = Optional.of(RegionUnit.SIDO);
                 } else if(area.getAreaname2().equals("NA")) {
                     sidoName = area.getAreaname1();
-                    checkAlreadyExistingWeatherNode(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.AM_WEATHER);
-                    weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.PM_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.AM_WEATHER);
+                    weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.DAY, Query.PM_WEATHER);
                     regionUnit = Optional.of(RegionUnit.SIDO);
 
                 } else {
@@ -493,13 +499,13 @@ public class WeatherService<T> {
                     }
 
                     if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
-                        checkAlreadyExistingWeatherNode(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.AM_WEATHER);
-                        weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.PM_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.AM_WEATHER);
+                        weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.DAY, Query.PM_WEATHER);
                         regionUnit = Optional.of(RegionUnit.SIDO_SGG);
                     } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
                         umdName = area.getAreaname4();
-                        checkAlreadyExistingWeatherNode(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.AM_WEATHER);
-                        weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.PM_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQueryForAm, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.AM_WEATHER);
+                        weatherRootQueryForPm = weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.DAY, Query.PM_WEATHER);
                         regionUnit = Optional.of(RegionUnit.SIDO_SGG_UMD);
                     }
                 }
@@ -532,7 +538,7 @@ public class WeatherService<T> {
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
                 AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>(Optional.empty());
-                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                 AtomicReference<String> amWeatherUid = new AtomicReference<>();
                 foundAmWeather.get().ifPresent(notNullAmWeather-> amWeatherUid.set(notNullAmWeather.getUid()));
@@ -547,7 +553,7 @@ public class WeatherService<T> {
 
             for (DayOfAmPm7 oneDay : area.getDayList()) {
                 AtomicReference<Optional<AmWeather>> foundAmWeather = new AtomicReference<>(Optional.empty());
-                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundAmWeather.set(weatherDao.getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                 Map<DateUnit, Integer> forecastDateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                 Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
@@ -573,7 +579,7 @@ public class WeatherService<T> {
         } else {
             for (DayOfAmPm7 oneDay : area.getDayList()) {
                 AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>(Optional.empty());
-                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                 AtomicReference<String> pmWeatherUid = new AtomicReference<>();
                 foundPmWeather.get().ifPresent(notNullPmWeather-> pmWeatherUid.set(notNullPmWeather.getUid()));
@@ -588,7 +594,7 @@ public class WeatherService<T> {
 
             for (DayOfAmPm7 oneDay : area.getDayList()) {
                 AtomicReference<Optional<PmWeather>> foundPmWeather = new AtomicReference<>(Optional.empty());
-                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm())));
+                Optional.ofNullable(foundRegion.getUid()).ifPresent(uid -> foundPmWeather.set(weatherDao.getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
 
                 Map<DateUnit, Integer> dateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
                 Optional<Day> dayNode = dateDao.getDayNode(dateMap);
@@ -621,14 +627,14 @@ public class WeatherService<T> {
             if(area.getAreaname1().equals(ConnectedSidoUmd.SEJONG.getSidoName())) {
                 sidoName = area.getAreaname1();
                 umdName = area.getAreaname2();
-                checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.HOUR, Query.HOURLY_WEATHER);
+                checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_UMD, DateUnit.HOUR, Query.HOURLY_WEATHER);
             } else {
                 if (area.getAreaname1().equals("-") || area.getAreaname1().equals("NA")) {
                     sidoName = area.getAreaname2();
-                    checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.HOUR, Query.HOURLY_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.HOUR, Query.HOURLY_WEATHER);
                 } else if(area.getAreaname2().equals("NA")) {
                     sidoName = area.getAreaname1();
-                    checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.HOUR, Query.HOURLY_WEATHER);
+                    checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO, DateUnit.HOUR, Query.HOURLY_WEATHER);
                 } else {
                     sidoName = area.getAreaname1();
                     sggName = area.getAreaname2() + " " + area.getAreaname3();
@@ -639,10 +645,10 @@ public class WeatherService<T> {
                     }
 
                     if (area.getAreaname4().equals("-") || area.getAreaname4().equals("NA")) {
-                        checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.HOUR, Query.HOURLY_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG, DateUnit.HOUR, Query.HOURLY_WEATHER);
                     } else if(!area.getAreaname4().equals("-") && !area.getAreaname4().equals("NA")){
                         umdName = area.getAreaname4();
-                        checkAlreadyExistingWeatherNode(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.HOUR, Query.HOURLY_WEATHER);
+                        checkAlreadyExistingWeatherNodeOfKorea(weatherRootQuery, foundRegion, sidoName, sggName, umdName, dateMap, RegionUnit.SIDO_SGG_UMD, DateUnit.HOUR, Query.HOURLY_WEATHER);
                     }
                 }
             }
@@ -690,9 +696,78 @@ public class WeatherService<T> {
 
     }
 
-    private void checkAlreadyExistingWeatherNode(WeatherRootQuery weatherRootQuery, Regions foundRegion, String sidoName, String sggName, String umdName, Map<DateUnit, Integer> dateMap, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
-        weatherRootQuery.setWeatherRootQuery(weatherDao.getAlreadyExistingWeatherNodeWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, regionUnit, dateUnit, query));
-        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent(region -> foundRegion.setRegionUidAndName(region.get(0), regionUnit));
+    private void checkAlreadyExistingWeatherNodeOfKorea(WeatherRootQuery weatherRootQuery, Regions foundRegion, String sidoName, String sggName, String umdName, Map<DateUnit, Integer> dateMap, RegionUnit regionUnit, DateUnit dateUnit, Query query) {
+        weatherRootQuery.setWeatherRootQuery(weatherDao.getAlreadyExistingWeatherNodeOfKoreaWithRegionNameAndDate(sidoName, sggName, umdName, dateMap, regionUnit, dateUnit, query));
+        if(Optional.ofNullable(weatherRootQuery.getRegion()).isPresent() && !weatherRootQuery.getRegion().isEmpty()) {
+            foundRegion.setRegionUidAndName(weatherRootQuery.getRegion().get(0), regionUnit);
+        }
+    }
+
+    public void callWorldWeatherApiOfKweather(KweatherWorldTopModel kweatherWorldTopModel, URI kweatherWorldUri, Map<DateUnit, Integer> dateMap) {
+        try {
+            kweatherWorldTopModel = restTemplate.getForObject(kweatherWorldUri, KweatherWorldTopModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (AreaOfWorld area : kweatherWorldTopModel.getAreas()) {
+            WeatherRootQuery weatherRootQuery = new WeatherRootQuery();
+            Regions foundCountry = new Regions();
+
+            String cityName = area.getDay0().getCity();
+            checkAlreadyExistingWeatherNodeOfWorld(weatherRootQuery, foundCountry, cityName, dateMap, DateUnit.DAY, Query.WORLD_DAILY_WEATHER);
+
+            List<WorldDailyWeather> worldDailyWeatherList = weatherRootQuery.getWorldDailyWeather();
+
+            if(Optional.ofNullable(foundCountry.getUid()).isPresent()) {
+                WorldDailyWeather newWorldDailyWeather = new WorldDailyWeather();
+
+                if (Optional.ofNullable(worldDailyWeatherList).isPresent() && !worldDailyWeatherList.isEmpty()) {
+                    for (DayOfWorld day : area.getDayList()) {
+                        WorldDailyWeather oldWorldDailyWeather = worldDailyWeatherList.get(0);
+                        newWorldDailyWeather.setWorldDailyWeather(oldWorldDailyWeather.getUid(), day);
+                        weatherDao.updateWeatherNode(newWorldDailyWeather);
+                    }
+                } else {
+                    for (DayOfWorld oneDay : area.getDayList()) {
+                        AtomicReference<Optional<WorldDailyWeather>> foundWorldDailyWeather = new AtomicReference<>(Optional.empty());
+                        Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundWorldDailyWeather.set(weatherDao.getWorldDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
+
+                        AtomicReference<String> worldDailyWeatherUid = new AtomicReference<>();
+                        foundWorldDailyWeather.get().ifPresent(notNullWorldDailyWeather-> worldDailyWeatherUid.set(notNullWorldDailyWeather.getUid()));
+
+                        newWorldDailyWeather = new WorldDailyWeather();
+                        newWorldDailyWeather.setWorldDailyWeather(worldDailyWeatherUid.get(), oneDay);
+
+                        foundCountry.getWorldDailyWeathers().add(newWorldDailyWeather);
+                    }
+
+                    regionDao.updateRegionNode(foundCountry);
+
+                    for (DayOfWorld oneDay : area.getDayList()) {
+                        AtomicReference<Optional<WorldDailyWeather>> foundWorldDailyWeather = new AtomicReference<>(Optional.empty());
+                        Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundWorldDailyWeather.set(weatherDao.getWorldDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(uid, oneDay.getTm().replaceAll("/", ""))));
+
+                        Map<DateUnit, Integer> forecastDateMap = dateService.splitDateIncludingDelim(oneDay.getTm());
+                        Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
+
+                        if(foundWorldDailyWeather.get().isPresent()) {
+                            dayNode.ifPresent(day -> day.getWorldDailyWeathers().add(foundWorldDailyWeather.get().get()));
+                            dateDao.updateDateNode(dayNode);
+                        }
+                        dayNode.ifPresent(day -> log.info("[Service] callKweatherDay7Api - " + day.getDay() + "일의 " + "지역->날씨<-날짜 노드 연결 완료"));
+                    }
+                }
+            }
+            log.info("[Service] callKweatherDay7Api - 나라 : " + area.getDay0().getCity());
+        }
+    }
+
+    private void checkAlreadyExistingWeatherNodeOfWorld(WeatherRootQuery weatherRootQuery, Regions foundCountry, String cityName, Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
+        weatherRootQuery.setWeatherRootQuery(weatherDao.getAlreadyExistingWeatherNodeOfWorldWithRegionNameAndDate(cityName, dateMap, dateUnit, query));
+        if(Optional.ofNullable(weatherRootQuery.getRegion()).isPresent() && !weatherRootQuery.getRegion().isEmpty()) {
+            foundCountry.setCountry(weatherRootQuery.getRegion().get(0));
+        }
     }
 
     public void callSpecialWeatherApi() {
@@ -768,6 +843,8 @@ public class WeatherService<T> {
 
     private void checkAlreadyExistingSpecialWeatherNode(WeatherRootQuery weatherRootQuery, Regions foundCountry, String uid, Map<DateUnit, Integer> dateMap, DateUnit dateUnit, Query query) {
         weatherRootQuery.setWeatherRootQuery(weatherDao.getAlreadyExistingWeatherNodeWithRegionUidAndDate(uid, dateMap, query));
-        Optional.ofNullable(weatherRootQuery.getRegion()).ifPresent(country -> foundCountry.setCountry(country.get(0)));
+        if(Optional.ofNullable(weatherRootQuery.getRegion()).isPresent() && !weatherRootQuery.getRegion().isEmpty()) {
+            foundCountry.setCountry(weatherRootQuery.getRegion().get(0));
+        }
     }
 }

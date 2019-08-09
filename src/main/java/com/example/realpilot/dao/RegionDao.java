@@ -24,20 +24,21 @@ public class RegionDao<T> {
     @Autowired
     private Gson gson = new Gson();
 
-    public void createRegionNode(Map<String, Regions> regionMap) {
+    public void createRegionNode(Map<String, Regions> koreaRegionMap) {
         Country korea = new Country();
         Sido prevSavedSido = new Sido();
         Sigungu prevSavedSigungu = new Sigungu();
 
         Optional<Country> optionalKorea = getCountryNodeWithName(CountryList.KOREA.getCountryName());
+        Optional<String> koreadUid = Optional.empty();
         if(optionalKorea.isPresent()) {
-            korea = optionalKorea.get();
+            koreadUid = Optional.ofNullable(optionalKorea.get().getUid());
         }
 
         // TODO: model로 옮기기
-        for(String regionName: regionMap.keySet()) {
-            // regionMap의 list 타입의 value => 행정동코드, 생성날짜, 격자X,Y, TM X,Y
-            Regions region = regionMap.get(regionName);
+        for(String regionName: koreaRegionMap.keySet()) {
+            // koreaRegionMap의 list 타입의 value => 행정동코드, 생성날짜, 격자X,Y, TM X,Y
+            Regions region = koreaRegionMap.get(regionName);
 
             Optional<Regions> optionalRegion = getRegionNodeWithName(region.getSidoName(), region.getSggName(), region.getUmdName());
 
@@ -80,7 +81,7 @@ public class RegionDao<T> {
                 eubmyeondong.setEubmyeondong(prevSavedSigungu, region);
             }
         }
-        korea.setCountry(korea, CountryList.KOREA);
+        korea.setCountry(koreadUid.get(), CountryList.KOREA);
 
         operations.mutate(dgraphClient.newTransaction(), korea);
     }

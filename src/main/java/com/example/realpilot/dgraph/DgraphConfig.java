@@ -84,7 +84,8 @@ public class DgraphConfig {
                 "amWeathers: uid @reverse .\n" +
                 "pmWeathers: uid @reverse .\n" +
                 "airPollutionDetails: uid @reverse .\n" +
-                "airPollutionOveralls: uid @reverse .\n";
+                "airPollutionOveralls: uid @reverse .\n" +
+                "worldDailyWeathers: uid @reverse .\n";
 
         DgraphProto.Operation op = DgraphProto.Operation.newBuilder().setSchema(schema).build();
         dgraphClient.alter(op);
@@ -123,7 +124,7 @@ public class DgraphConfig {
                     dgraphClient.alter(op);
 
                     log.info("[Config] DGraph 스키마 세팅 완료");
-                } catch(Exception e) {
+                } catch( Exception e) {
                     throw new IllegalStateException(e);
                 }
             }
