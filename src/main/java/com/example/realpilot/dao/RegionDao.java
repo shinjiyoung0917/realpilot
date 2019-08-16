@@ -1,6 +1,8 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.exceptionList.JsonAndObjectMappingException;
+import com.example.realpilot.exceptionList.DgraphQueryException;
 import com.example.realpilot.model.region.*;
 import com.example.realpilot.utilAndConfig.CountryList;
 import com.google.gson.Gson;
@@ -97,8 +99,20 @@ public class RegionDao<T> {
         Map<String, String> var  = new LinkedHashMap<>();
         var.put("$countryName", countryName);
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Country> countryResult =  regionRootQuery.getCountry();
 
         Optional<Country> result = Optional.empty();
@@ -130,8 +144,20 @@ public class RegionDao<T> {
         var.put("$sggName", String.valueOf(sggName));
         var.put("$umdName", String.valueOf(umdName));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
         Optional<Regions> result = Optional.empty();
@@ -158,8 +184,20 @@ public class RegionDao<T> {
         var.put("$gridX", String.valueOf(gridX));
         var.put("$gridY", String.valueOf(gridY));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
         // TODO: Optional로 변경
@@ -180,8 +218,20 @@ public class RegionDao<T> {
         Map<String, String> var  = new LinkedHashMap<>();
         var.put("$measureStationName", String.valueOf(stationName));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
         Optional<List<Regions>> result = Optional.empty();
@@ -200,8 +250,20 @@ public class RegionDao<T> {
                 "  }\n" +
                 "}";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Regions> regionResult =  regionRootQuery.getRegion();
 
         Optional<List<Regions>> result = Optional.empty();
@@ -220,8 +282,20 @@ public class RegionDao<T> {
                 "  }\n" +
                 "}\n";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         Set<Regions> gridResult =  regionRootQuery.getGrid();
 
         Optional<Set<Regions>> result = Optional.empty();
@@ -242,8 +316,20 @@ public class RegionDao<T> {
                 "  }\n" +
                 "}\n";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         Set<Regions> tmCoordResult =  regionRootQuery.getTmCoordinate();
 
         Optional<Set<Regions>> result = Optional.empty();
@@ -263,13 +349,56 @@ public class RegionDao<T> {
                 "  }\n" +
                 "}\n";
 
-        DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
-        RegionRootQuery regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         Set<Regions> measureStationInfoResult =  regionRootQuery.getMeasureStationInfo();
 
         Optional<Set<Regions>> result = Optional.empty();
         if(Optional.ofNullable(measureStationInfoResult).isPresent() && !measureStationInfoResult.isEmpty()) {
             result = Optional.of(measureStationInfoResult);
+        }
+
+        return result;
+    }
+
+    public Optional<Overseas> getOverseasNode() {
+        String fullQueryString = "query {\n" +
+                "  overseas(func: has(countries)) {\n" +
+                "    uid\n" +
+                "  }\n" +
+                "}\n";
+
+        RegionRootQuery regionRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().query(fullQueryString);
+            try {
+                regionRootQuery = gson.fromJson(res.getJson().toStringUtf8(), RegionRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
+        List<Overseas> overseasResult =  regionRootQuery.getOverseas();
+
+        Optional<Overseas> result = Optional.empty();
+        if(Optional.ofNullable(overseasResult).isPresent() && !overseasResult.isEmpty()) {
+            result = Optional.of(overseasResult.get(0));
         }
 
         return result;

@@ -9,6 +9,7 @@ import java.util.Set;
 public class RegionRootQuery {
     private List<Regions> region;
     private List<Country> country;
+    private List<Overseas> overseas;
     private Set<Regions> grid;
     private Set<Regions> tmCoordinate;
     private Set<Regions> measureStationInfo;

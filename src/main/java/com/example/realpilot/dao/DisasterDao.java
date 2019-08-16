@@ -1,6 +1,8 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.exceptionList.JsonAndObjectMappingException;
+import com.example.realpilot.exceptionList.DgraphQueryException;
 import com.example.realpilot.model.disaster.DisasterRootQuery;
 import com.example.realpilot.model.disaster.Earthquake;
 import com.example.realpilot.utilAndConfig.DateUnit;
@@ -49,8 +51,19 @@ public class DisasterDao<T> {
         String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
         String fullQueryString = queryStringWithRegionUidAndDate(dateQueryString, rootQuery, edge);
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        DisasterRootQuery disasterRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DisasterRootQuery.class);
+        DisasterRootQuery disasterRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                disasterRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DisasterRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
         return disasterRootQuery;
     }
@@ -81,10 +94,20 @@ public class DisasterDao<T> {
     }
 
     public Optional<Earthquake> getEarthquakeNodeLinkedToRegionWithRegionUidAndDate(String uid, String releaseDate, String releaseTime) {
-        DgraphProto.Response res;
-        res = queryForEarthquake(uid, releaseDate, releaseTime);
+        DisasterRootQuery disasterRootQuery;
+        try {
+            DgraphProto.Response res = queryForEarthquake(uid, releaseDate, releaseTime);
+            try {
+                disasterRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DisasterRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        DisasterRootQuery disasterRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DisasterRootQuery.class);
         List<Earthquake> earthquakeResult =  disasterRootQuery.getEarthquake();
 
         Optional<Earthquake> result = Optional.empty();
@@ -106,7 +129,7 @@ public class DisasterDao<T> {
 
         String fullQueryString = "query earthquake($id: string, $occurrenceDate: string, $occurrenceTime: string) {\n" +
                 " earthquake(func: uid($id)) {\n" +
-                "    earthquakes @filter(eq(occurrenceDate, $occurrenceDate) and eq(occurrenceTime, $occurrenceTime) {\n" +
+                "    earthquakes @filter(eq(occurrenceDate, $occurrenceDate) and eq(occurrenceTime, $occurrenceTime)) {\n" +
                 "      uid\n" +
                 "      expand(_all_)\n" +
                 "    }\n" +

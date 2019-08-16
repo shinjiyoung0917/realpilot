@@ -3,10 +3,12 @@ package com.example.realpilot.service;
 import com.example.realpilot.dao.DateDao;
 import com.example.realpilot.dao.DisasterDao;
 import com.example.realpilot.dao.RegionDao;
+import com.example.realpilot.exceptionList.ApiCallException;
 import com.example.realpilot.externalApiModel.earthquake.*;
 import com.example.realpilot.model.date.Hour;
 import com.example.realpilot.model.disaster.DisasterRootQuery;
 import com.example.realpilot.model.disaster.Earthquake;
+import com.example.realpilot.model.region.Overseas;
 import com.example.realpilot.model.region.Regions;
 import com.example.realpilot.utilAndConfig.CountryList;
 import com.example.realpilot.utilAndConfig.DateUnit;
@@ -47,16 +49,20 @@ public class DisasterService {
     private String earthquakeApiUrl;
 
     public void callEarthquakeApi() {
+        String todayDate = dateService.makeCurrentDateFormat();
+        String fewDaysAgoDate = dateService.makeDateOfFewDaysAgoFormat(3);
+
         EarthquakeInfoTopModel earthquakeInfoTopModel = new EarthquakeInfoTopModel();
 
-        URI uri = URI.create(earthquakeApiUrl + "?ServiceKey=" + serviceKey + "&_returnType=json");
+        URI uri = URI.create(earthquakeApiUrl + "?ServiceKey=" + serviceKey + "&fromTmFc=" + fewDaysAgoDate + "&toTmFc=" + todayDate + "&_type=json");
 
         try {
             earthquakeInfoTopModel = restTemplate.getForObject(uri, EarthquakeInfoTopModel.class);
         } catch (Exception e) {
             e.printStackTrace();
+            throw new ApiCallException();
         }
-
+        // TODO: 데이터 안올 때 값 확인하기
         Optional<List<EarthquakeInfo>> optionalEarthquakeInfoList = Optional.ofNullable(earthquakeInfoTopModel)
                 .map(EarthquakeInfoTopModel::getResponse)
                 .map(EarthquakeInfoResponse::getBody)
@@ -67,19 +73,22 @@ public class DisasterService {
             List<EarthquakeInfo> earthquakeInfoList = optionalEarthquakeInfoList.get();
 
             for(EarthquakeInfo earthquakeInfo : earthquakeInfoList) {
-                String countryUid = "";
+                String uid = null;
                 int forecastType =  earthquakeInfo.getFcTp();
                 switch (forecastType) {
                     case 2:
                     case 12:
-                        // TODO: 해외 노드 만들어서 uid 조회
+                        Optional<Overseas> optionalOverseas = regionDao.getOverseasNode();
+                        if(optionalOverseas.isPresent()) {
+                            uid = optionalOverseas.get().getUid();
+                        }
                         break;
                     case 3:
                     case 5:
                     case 11:
                         Optional<Regions> optionalKorea = regionDao.getCountryNodeWithName(CountryList.KOREA.getCountryName());
                         if(optionalKorea.isPresent()) {
-                            countryUid = optionalKorea.get().getUid();
+                            uid = optionalKorea.get().getUid();
                         }
                         break;
                 }
@@ -91,7 +100,7 @@ public class DisasterService {
 
                 DisasterRootQuery disasterRootQuery = new DisasterRootQuery();
                 Regions foundCountry = new Regions();
-                checkAlreadyExistingEarthquakeNode(disasterRootQuery, foundCountry, countryUid, dateMap, DateUnit.DAY, Query.EARTHQUAKE);
+                checkAlreadyExistingEarthquakeNode(disasterRootQuery, foundCountry, uid, dateMap, DateUnit.HOUR, Query.EARTHQUAKE);
 
                 List<Earthquake> earthquakeList = disasterRootQuery.getEarthquake();
 
@@ -103,26 +112,31 @@ public class DisasterService {
                         newEarthquake.setEarthquake(oldEarthquake.getUid(), earthquakeInfo);
                         disasterDao.updateDisasterNode(newEarthquake);
                     } else {
-                        AtomicReference<Optional<Earthquake>> foundEarthquake1 = new AtomicReference<>(Optional.empty());
-                        String finalCountryUid = countryUid;
-                        Optional.ofNullable(countryUid).ifPresent(uid -> foundEarthquake1.set(disasterDao.getEarthquakeNodeLinkedToRegionWithRegionUidAndDate(finalCountryUid, date, time)));
+                        String earthquakeUid = null;
+                        if (Optional.ofNullable(foundCountry.getEarthquakes()).isPresent() && !foundCountry.getEarthquakes().isEmpty()) {
+                            earthquakeUid = foundCountry.getEarthquakes().get(0).getUid();
+                        }
+                        newEarthquake.setUid(earthquakeUid);
+
+                        /*AtomicReference<Optional<Earthquake>> foundEarthquake1 = new AtomicReference<>(Optional.empty());
+                        Optional.ofNullable(uid).ifPresent(notNullUid -> foundEarthquake1.set(disasterDao.getEarthquakeNodeLinkedToRegionWithRegionUidAndDate(notNullUid, date, time)));
 
                         AtomicReference<String> earthquakeUid = new AtomicReference<>();
-                        foundEarthquake1.get().ifPresent(notNullEarthquake -> earthquakeUid.set(notNullEarthquake.getUid()));
+                        foundEarthquake1.get().ifPresent(notNullEarthquake -> earthquakeUid.set(notNullEarthquake.getUid()));*/
 
                         newEarthquake = new Earthquake();
-                        newEarthquake.setEarthquake(earthquakeUid.get(), earthquakeInfo);
+                        newEarthquake.setEarthquake(earthquakeUid, earthquakeInfo);
 
                         foundCountry.getEarthquakes().add(newEarthquake);
                         regionDao.updateRegionNode(foundCountry);
 
-                        AtomicReference<Optional<Earthquake>> foundEarthquake2 = new AtomicReference<>(Optional.empty());
-                        Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundEarthquake2.set(disasterDao.getEarthquakeNodeLinkedToRegionWithRegionUidAndDate(uid, date, time)));
+                        AtomicReference<Optional<Earthquake>> foundEarthquake = new AtomicReference<>(Optional.empty());
+                        Optional.ofNullable(foundCountry.getUid()).ifPresent(notNullUid -> foundEarthquake.set(disasterDao.getEarthquakeNodeLinkedToRegionWithRegionUidAndDate(notNullUid, date, time)));
 
                         Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
-                        if (foundEarthquake2.get().isPresent()) {
-                            hourNode.ifPresent(hour -> hour.getEarthquakes().add(foundEarthquake2.get().get()));
+                        if (foundEarthquake.get().isPresent()) {
+                            hourNode.ifPresent(hour -> hour.getEarthquakes().add(foundEarthquake.get().get()));
                         }
                         dateDao.updateDateNode(hourNode);
 

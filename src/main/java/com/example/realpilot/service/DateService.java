@@ -100,6 +100,15 @@ public class DateService {
         return numberString;
     }
 
+    public String makeDateOfFewDaysAgoFormat(int n) {
+        Calendar  cal  =  Calendar.getInstance();
+        SimpleDateFormat dateFormat  =  new SimpleDateFormat("yyyyMMdd");
+        cal.set (cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE) - n);
+        String  lastDate  =  dateFormat.format (cal.getTime());
+
+        return lastDate;
+    }
+
     // TODO: 시간 얻는 메서드는 Service에서만 사용하도록 수정
     public Map<DateUnit, Integer> getCurrentDate() {
         Map<DateUnit, Integer> dateMap = new HashMap<>();

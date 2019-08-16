@@ -3,6 +3,7 @@ package com.example.realpilot.service;
 import com.example.realpilot.dao.AirPollutionDao;
 import com.example.realpilot.dao.DateDao;
 import com.example.realpilot.dao.RegionDao;
+import com.example.realpilot.exceptionList.ApiCallException;
 import com.example.realpilot.externalApiModel.airPollutionForecastOverall.AirPollutionForecastOverall;
 import com.example.realpilot.externalApiModel.airPollutionForecastOverall.AirPollutionForecastOverallTopModel;
 import com.example.realpilot.externalApiModel.nearbyMeasureStationList.NearbyMeasureStationList;
@@ -75,6 +76,7 @@ public class AirPollutionService {
                     nearbyMeasureStationListTopModel = restTemplate.getForObject(uri, NearbyMeasureStationListTopModel.class);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    throw new ApiCallException();
                 }
 
                 // TODO: Read timed out 발생하면 재실행되도록?
@@ -106,6 +108,7 @@ public class AirPollutionService {
                     realTimeAirPollutionTopModel = restTemplate.getForObject(uri, RealTimeAirPollutionTopModel.class);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    throw new ApiCallException();
                 }
 
                 // TODO: Read timed out 발생하면 재실행되도록?
@@ -142,25 +145,31 @@ public class AirPollutionService {
                                     newAirPollutionDetail.setAirPollutionDetail(oldAirPollutionDetail.getUid(), realTimeAirPollutionList.get(0));
                                     airPollutionDao.updateAirPollutionNode(newAirPollutionDetail);
                                 } else {
-                                    AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail1 = new AtomicReference<>(Optional.empty());
+                                    String airPollutionDetailUid = null;
+                                    if (Optional.ofNullable(foundEubmyeondong.getAirPollutionDetails()).isPresent() && !foundEubmyeondong.getAirPollutionDetails().isEmpty()) {
+                                        airPollutionDetailUid = foundEubmyeondong.getAirPollutionDetails().get(0).getUid();
+                                    }
+                                    newAirPollutionDetail.setUid(airPollutionDetailUid);
+
+                                   /* AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail1 = new AtomicReference<>(Optional.empty());
                                     Optional.ofNullable(eubmyeondong.getUid()).ifPresent(uid -> foundAirPollutionDetail1.set(airPollutionDao.getAirPollutionDetailNodeLinkedToRegionWithRegionUidAndDate(uid, date, time)));
 
                                     AtomicReference<String> airPollutionDetailUid = new AtomicReference<>();
-                                    foundAirPollutionDetail1.get().ifPresent(notNullAirPollutionDetail -> airPollutionDetailUid.set(notNullAirPollutionDetail.getUid()));
+                                    foundAirPollutionDetail1.get().ifPresent(notNullAirPollutionDetail -> airPollutionDetailUid.set(notNullAirPollutionDetail.getUid()));*/
 
                                     newAirPollutionDetail = new AirPollutionDetail();
-                                    newAirPollutionDetail.setAirPollutionDetail(airPollutionDetailUid.get(), realTimeAirPollutionList.get(0));
+                                    newAirPollutionDetail.setAirPollutionDetail(airPollutionDetailUid, realTimeAirPollutionList.get(0));
 
                                     foundEubmyeondong.getAirPollutionDetails().add(newAirPollutionDetail);
                                     regionDao.updateRegionNode(foundEubmyeondong);
 
-                                    AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail2 = new AtomicReference<>(Optional.empty());
-                                    Optional.ofNullable(foundEubmyeondong.getUid()).ifPresent(uid -> foundAirPollutionDetail2.set(airPollutionDao.getAirPollutionDetailNodeLinkedToRegionWithRegionUidAndDate(uid, date, time)));
+                                    AtomicReference<Optional<AirPollutionDetail>> foundAirPollutionDetail = new AtomicReference<>(Optional.empty());
+                                    Optional.ofNullable(foundEubmyeondong.getUid()).ifPresent(uid -> foundAirPollutionDetail.set(airPollutionDao.getAirPollutionDetailNodeLinkedToRegionWithRegionUidAndDate(uid, date, time)));
 
                                     Optional<Hour> hourNode = dateDao.getHourNode(dateMap);
 
-                                    if (foundAirPollutionDetail2.get().isPresent()) {
-                                        hourNode.ifPresent(hour -> hour.getAirPollutionDetails().add(foundAirPollutionDetail2.get().get()));
+                                    if (foundAirPollutionDetail.get().isPresent()) {
+                                        hourNode.ifPresent(hour -> hour.getAirPollutionDetails().add(foundAirPollutionDetail.get().get()));
                                         dateDao.updateDateNode(hourNode);
                                     }
                                 }
@@ -190,6 +199,7 @@ public class AirPollutionService {
             airPollutionForecastOverallTopModel = restTemplate.getForObject(uri, AirPollutionForecastOverallTopModel.class);
         } catch (Exception e) {
             e.printStackTrace();
+            throw new ApiCallException();
         }
 
         List<AirPollutionForecastOverall> airPollutionForecastOverallList = airPollutionForecastOverallTopModel.getList();
@@ -243,35 +253,41 @@ public class AirPollutionService {
                             if (dayTerm == 0) {
                                 time = dateService.convertToDoubleDigit(todayDateMap.get(DateUnit.HOUR)) + "00";
                             }
-
-                            AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall1 = new AtomicReference<>(Optional.empty());
                             String finalTime = time;
+
+                            String airPollutionOverallUid = null;
+                            if (Optional.ofNullable(foundCountry.getAirPollutionOveralls()).isPresent() && !foundCountry.getAirPollutionOveralls().isEmpty()) {
+                                airPollutionOverallUid = foundCountry.getAirPollutionOveralls().get(0).getUid();
+                            }
+                            newAirPollutionOverall.setUid(airPollutionOverallUid);
+
+                            /*AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall1 = new AtomicReference<>(Optional.empty());
                             Optional.ofNullable(countryUid).ifPresent(uid -> foundAirPollutionOverall1.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(countryUid, date, finalTime, airPollutionForecastOverall.getInformCode())));
 
                             AtomicReference<String> airPollutionOverallUid = new AtomicReference<>();
-                            foundAirPollutionOverall1.get().ifPresent(notNullAirPollutionOverall -> airPollutionOverallUid.set(notNullAirPollutionOverall.getUid()));
+                            foundAirPollutionOverall1.get().ifPresent(notNullAirPollutionOverall -> airPollutionOverallUid.set(notNullAirPollutionOverall.getUid()));*/
 
                             newAirPollutionOverall = new AirPollutionOverall();
-                            newAirPollutionOverall.setAirPollutionOverall(airPollutionOverallUid.get(), airPollutionForecastOverall, dayTerm);
+                            newAirPollutionOverall.setAirPollutionOverall(airPollutionOverallUid, airPollutionForecastOverall, dayTerm);
 
                             foundCountry.getAirPollutionOveralls().add(newAirPollutionOverall);
                             regionDao.updateRegionNode(foundCountry);
 
-                            AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall2 = new AtomicReference<>(Optional.empty());
-                            Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundAirPollutionOverall2.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(uid, date, finalTime, airPollutionForecastOverall.getInformCode())));
+                            AtomicReference<Optional<AirPollutionOverall>> foundAirPollutionOverall = new AtomicReference<>(Optional.empty());
+                            Optional.ofNullable(foundCountry.getUid()).ifPresent(uid -> foundAirPollutionOverall.set(airPollutionDao.getAirPollutionOverallNodeLinkedToRegionWithRegionUidAndDate(uid, date, finalTime, airPollutionForecastOverall.getInformCode())));
 
                             if (dayTerm == 0) {
                                 Optional<Hour> hourNode = dateDao.getHourNode(todayDateMap);
 
-                                if (foundAirPollutionOverall2.get().isPresent()) {
-                                    hourNode.ifPresent(hour -> hour.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                                if (foundAirPollutionOverall.get().isPresent()) {
+                                    hourNode.ifPresent(hour -> hour.getAirPollutionOveralls().add(foundAirPollutionOverall.get().get()));
                                 }
                                 dateDao.updateDateNode(hourNode);
                             } else if (dayTerm >= 1) {
                                 Optional<Day> dayNode = dateDao.getDayNode(forecastDateMap);
 
-                                if (foundAirPollutionOverall2.get().isPresent()) {
-                                    dayNode.ifPresent(day -> day.getAirPollutionOveralls().add(foundAirPollutionOverall2.get().get()));
+                                if (foundAirPollutionOverall.get().isPresent()) {
+                                    dayNode.ifPresent(day -> day.getAirPollutionOveralls().add(foundAirPollutionOverall.get().get()));
                                 }
                                 dateDao.updateDateNode(dayNode);
                             }

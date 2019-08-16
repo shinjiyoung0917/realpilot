@@ -1,12 +1,12 @@
 package com.example.realpilot.service;
 
 import com.example.realpilot.dao.RegionDao;
+import com.example.realpilot.exceptionList.ApiCallException;
+import com.example.realpilot.exceptionList.ExcelFileIOException;
+import com.example.realpilot.exceptionList.ExcelFileNotFoundException;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinateTopModel;
 import com.example.realpilot.externalApiModel.tmCoordinate.TmCoordinate;
-import com.example.realpilot.model.region.Country;
-import com.example.realpilot.model.region.Eubmyeondong;
-import com.example.realpilot.model.region.Regions;
-import com.example.realpilot.model.region.Sigungu;
+import com.example.realpilot.model.region.*;
 import com.example.realpilot.utilAndConfig.*;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -56,14 +56,21 @@ public class RegionService {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(addressCodeFilePath);
-            readAnyExcelFile(fis, ExcelFileName.ADDRESS_CODE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
             try {
-                fis.close();
+                readAnyExcelFile(fis, ExcelFileName.ADDRESS_CODE);
             } catch (IOException e) {
                 e.printStackTrace();
+                throw new ExcelFileIOException();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            throw new ExcelFileNotFoundException();
+        } finally {
+            try {
+                Objects.requireNonNull(fis).close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new ExcelFileIOException();
             }
         }
     }
@@ -74,14 +81,21 @@ public class RegionService {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(gridFilePath);
-            readAnyExcelFile(fis, ExcelFileName.GRID);
-        } catch (IOException e) {
+            try {
+                readAnyExcelFile(fis, ExcelFileName.GRID);
+            } catch(IOException e) {
+                e.printStackTrace();
+                throw new ExcelFileIOException();
+            }
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
+            throw new ExcelFileNotFoundException();
         } finally {
             try {
-                fis.close();
+                Objects.requireNonNull(fis).close();
             } catch (IOException e) {
                 e.printStackTrace();
+                throw new ExcelFileIOException();
             }
         }
     }
@@ -107,7 +121,7 @@ public class RegionService {
         for(int rowIndex = 1 ; rowIndex < numberOfRows ; ++rowIndex) {
             XSSFRow row = sheet.getRow(rowIndex);
 
-            if(row != null) {
+            if(Optional.ofNullable(row).isPresent()) {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
@@ -116,7 +130,7 @@ public class RegionService {
                 for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
 
-                    if(cell == null) {
+                    if(!Optional.ofNullable(cell).isPresent()) {
                         continue;
                     } else {
                         keyString = region.setRegionByAddressCode(cell, columnIndex, keyString);
@@ -136,7 +150,7 @@ public class RegionService {
         for(int rowIndex = 1 ; rowIndex < numberOfRows ; ++rowIndex) {
             XSSFRow row = sheet.getRow(rowIndex);
 
-            if(row != null) {
+            if(Optional.ofNullable(row).isPresent()) {
                 int numberOfCells = row.getPhysicalNumberOfCells();
 
                 String keyString = "";
@@ -145,7 +159,7 @@ public class RegionService {
                 for(int columnIndex = 0; columnIndex < numberOfCells ; ++columnIndex) {
                     XSSFCell cell = sheet.getRow(rowIndex).getCell((short)columnIndex);
 
-                    if(cell == null) {
+                    if(!Optional.ofNullable(cell).isPresent()) {
                         continue;
                     } else {
                         Optional<Regions> originalRegion = Optional.ofNullable(koreaRegionMap.get(keyString));
@@ -176,6 +190,15 @@ public class RegionService {
     }
 
     public void addWorldRegionNode() {
+        int count = 0;
+        Overseas overseas;
+        Optional<Overseas> optionalOverseas = regionDao.getOverseasNode();
+        if(optionalOverseas.isPresent()) {
+            overseas = optionalOverseas.get();
+        } else {
+            overseas = new Overseas();
+        }
+
         for(CountryList oneCountry : CountryList.values()) {
             if(oneCountry.getCountryName().equals(CountryList.KOREA.getCountryName())) {
                 continue;
@@ -188,9 +211,13 @@ public class RegionService {
             Country country = new Country();
             country.setCountry(countryUid, oneCountry);
 
-            regionDao.updateRegionNode(country);
-            log.info("[Service] addWorldRegionNode - " + country.getCountryName() + " 노드 삽입 완료");
+            overseas.getCountries().add(country);
+            ++count;
+            log.info("[Service] addWorldRegionNode - " + country.getCountryName());
         }
+        overseas.setOverseas(overseas.getUid(), count);
+        regionDao.updateRegionNode(overseas);
+        log.info("[Service] addWorldRegionNode - 모든 노드 삽입 완료");
     }
 
     public void callTmCoordinateApi() {
@@ -205,8 +232,10 @@ public class RegionService {
                 tmCoordinateTopModel = restTemplate.getForObject(uri, TmCoordinateTopModel.class);
             } catch (Exception e) {
                 e.printStackTrace();
+                throw new ApiCallException();
             }
 
+            // TODO: 익셉션 핸들링
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

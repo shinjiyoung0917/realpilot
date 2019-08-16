@@ -1,6 +1,8 @@
 package com.example.realpilot.dao;
 
 import com.example.realpilot.dgraph.DgraphOperations;
+import com.example.realpilot.exceptionList.JsonAndObjectMappingException;
+import com.example.realpilot.exceptionList.DgraphQueryException;
 import com.example.realpilot.model.weather.*;
 import com.example.realpilot.service.DateService;
 import com.example.realpilot.utilAndConfig.*;
@@ -42,8 +44,19 @@ public class WeatherDao<T> {
         String dateQueryString = dateDao.getDateQueryString(DateUnit.HOUR, var, dateMap, query);
         String fullQueryString = queryStringWithRegionUidAndDate(dateQueryString, query.getRootQuery(), query.getEdge());
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
         return weatherRootQuery;
     }
@@ -72,10 +85,20 @@ public class WeatherDao<T> {
     }
 
     public Optional<HourlyWeather> getHourlyWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate, String forecastTime, Query query) {
-        DgraphProto.Response res = null;
-        res = queryByForecastDateAndTime(uid, forecastDate, forecastTime, query.getRootQuery(), query.getEdge());
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryByForecastDateAndTime(uid, forecastDate, forecastTime, query.getRootQuery(), query.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<HourlyWeather> hourlyWeatherResult =  weatherRootQuery.getHourlyWeather();
 
         Optional<HourlyWeather> result = Optional.empty();
@@ -101,6 +124,9 @@ public class WeatherDao<T> {
         var.put("$year", String.valueOf(dateMap.get(DateUnit.YEAR)));
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
+        if(dateUnit.equals(DateUnit.HOUR)) {
+            var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
+        }
 
         String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
 
@@ -131,8 +157,19 @@ public class WeatherDao<T> {
                 break;
         }
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
         return weatherRootQuery;
     }
@@ -176,6 +213,7 @@ public class WeatherDao<T> {
                 dateQueryString +
                 "    \n" +
                 "  " + weatherRootQuery + "(func: uid(var1)) @filter(uid(var2)) {\n" +
+                "    uid\n" +
                 "    expand(_all_)\n" +
                 "  }\n" +
                 "}";
@@ -200,6 +238,7 @@ public class WeatherDao<T> {
                 dateQueryString +
                 "      \n" +
                 "  " + weatherRootQuery + "(func: uid(var1)) @filter(uid(var2)) {\n" +
+                "    uid\n" +
                 "    expand(_all_)\n" +
                 "  }\n" +
                 "}";
@@ -228,6 +267,7 @@ public class WeatherDao<T> {
                 dateQueryString +
                 "      \n" +
                 "  " + weatherRootQuery + "(func: uid(var1)) @filter(uid(var2)) {\n" +
+                "    uid\n" +
                 "    expand(_all_)\n" +
                 "  }\n" +
                 "}";
@@ -246,8 +286,19 @@ public class WeatherDao<T> {
         String dateQueryString = dateDao.getDateQueryString(dateUnit, var, dateMap, query);
         String fullQueryString = queryStringWithCountryNameAndDate(dateQueryString, query.getRootQuery(), query.getEdge());
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+            weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
         return weatherRootQuery;
     }
@@ -274,11 +325,20 @@ public class WeatherDao<T> {
     }
 
     public Optional<DailyWeather> getDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
-        DgraphProto.Response res;
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.DAILY_WEATHER.getRootQuery(), Query.DAILY_WEATHER.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.DAILY_WEATHER.getRootQuery(), Query.DAILY_WEATHER.getEdge());
-
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<DailyWeather> dailyWeatherResult =  weatherRootQuery.getDailyWeather();
 
        Optional<DailyWeather> result = Optional.empty();
@@ -293,11 +353,20 @@ public class WeatherDao<T> {
     }
 
     public Optional<AmWeather> getAmWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
-        DgraphProto.Response res;
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.AM_WEATHER.getRootQuery(), Query.AM_WEATHER.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.AM_WEATHER.getRootQuery(), Query.AM_WEATHER.getEdge());
-
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<AmWeather> amWeatherResult =  weatherRootQuery.getAmWeather();
 
         Optional<AmWeather> result = Optional.empty();
@@ -312,11 +381,19 @@ public class WeatherDao<T> {
     }
 
     public Optional<PmWeather> getPmWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
-        DgraphProto.Response res;
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.PM_WEATHER.getRootQuery(), Query.PM_WEATHER.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            throw new DgraphQueryException();
+        }
 
-        res = queryForKweatherDay7OrAmPm7(uid, forecastDate, Query.PM_WEATHER.getRootQuery(), Query.PM_WEATHER.getEdge());
-
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<PmWeather> pmWeatherResult =  weatherRootQuery.getPmWeather();
 
         Optional<PmWeather> result = Optional.empty();
@@ -350,11 +427,20 @@ public class WeatherDao<T> {
     }
 
     public Optional<WorldDailyWeather> getWorldDailyWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate) {
-        DgraphProto.Response res;
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryForKweatherWorld(uid, forecastDate, Query.WORLD_DAILY_WEATHER.getRootQuery(), Query.WORLD_DAILY_WEATHER.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        res = queryForKweatherWorld(uid, forecastDate, Query.WORLD_DAILY_WEATHER.getRootQuery(), Query.WORLD_DAILY_WEATHER.getEdge());
-
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<WorldDailyWeather> worldDailyWeatherResult =  weatherRootQuery.getWorldDailyWeather();
 
         Optional<WorldDailyWeather> result = Optional.empty();
@@ -389,11 +475,20 @@ public class WeatherDao<T> {
     }
 
     public Optional<SpecialWeather> getSpecialWeatherNodeLinkedToRegionWithRegionUidAndDate(String uid, String forecastDate, String forecastTime) {
-        DgraphProto.Response res;
+        WeatherRootQuery weatherRootQuery;
+        try {
+            DgraphProto.Response res = queryByForecastDateAndTime(uid, forecastDate, forecastTime, Query.SPECIAL_WEATHER.getRootQuery(), Query.SPECIAL_WEATHER.getEdge());
+            try {
+                weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
 
-        res = queryByForecastDateAndTime(uid, forecastDate, forecastTime, Query.SPECIAL_WEATHER.getRootQuery(), Query.SPECIAL_WEATHER.getEdge());
-
-        WeatherRootQuery weatherRootQuery = gson.fromJson(res.getJson().toStringUtf8(), WeatherRootQuery.class);
         List<SpecialWeather> specialWeatherResult =  weatherRootQuery.getSpecialWeather();
 
         Optional<SpecialWeather> result = Optional.empty();

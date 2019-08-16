@@ -1,5 +1,7 @@
 package com.example.realpilot.dao;
 
+import com.example.realpilot.exceptionList.JsonAndObjectMappingException;
+import com.example.realpilot.exceptionList.DgraphQueryException;
 import com.example.realpilot.model.date.*;
 import com.example.realpilot.dgraph.DgraphOperations;
 import com.example.realpilot.utilAndConfig.DateUnit;
@@ -7,7 +9,6 @@ import com.example.realpilot.utilAndConfig.Query;
 import com.google.gson.Gson;
 import io.dgraph.DgraphClient;
 import io.dgraph.DgraphProto;
-import io.dgraph.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +41,21 @@ public class DateDao<T> {
                 "}";
 
         Map<String, String> var = Collections.singletonMap("$year", String.valueOf(currentYear));
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
 
-        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        DateRootQuery dateRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<DateRootQuery.DataByFunc> monthsCountResult = dateRootQuery.getMonthsCount();
 
         if(Optional.ofNullable(monthsCountResult).isPresent() && !monthsCountResult.isEmpty()) {
@@ -116,8 +129,20 @@ public class DateDao<T> {
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
         var.put("$hour", String.valueOf(dateMap.get(DateUnit.HOUR)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        DateRootQuery dateRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Dates> dateResult =  dateRootQuery.getDate();
 
         Optional<Hour> result = Optional.empty();
@@ -156,8 +181,20 @@ public class DateDao<T> {
         var.put("$month", String.valueOf(dateMap.get(DateUnit.MONTH)));
         var.put("$day", String.valueOf(dateMap.get(DateUnit.DAY)));
 
-        DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
-        DateRootQuery dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+        DateRootQuery dateRootQuery;
+        try {
+            DgraphProto.Response res = dgraphClient.newTransaction().queryWithVars(fullQueryString, var);
+            try {
+                dateRootQuery = gson.fromJson(res.getJson().toStringUtf8(), DateRootQuery.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new JsonAndObjectMappingException();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DgraphQueryException();
+        }
+
         List<Dates> dateResult =  dateRootQuery.getDate();
 
         Optional<Day> result = Optional.empty();
